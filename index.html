@@ -1,0 +1,2516 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>𝑬𝑺𝑪𝑨𝑵𝑶𝑹 | نكسس - الشبكة الآمنة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Cairo:wght@300;400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #020408;
+  --bg-secondary: #060d14;
+  --bg-card: #0a1520;
+  --bg-panel: #0d1b2a;
+  --cyan: #00f5ff;
+  --cyan-dim: #00a8b5;
+  --green: #00ff41;
+  --green-dim: #00a82b;
+  --red: #ff003c;
+  --gold: #ffd700;
+  --silver: #c0c0c0;
+  --purple: #9d00ff;
+  --orange: #ff6b00;
+  --text-primary: #e0f4ff;
+  --text-secondary: #7eb8d4;
+  --text-muted: #3a6a85;
+  --border: #0d3a52;
+  --border-glow: #00f5ff33;
+  --glass: rgba(0,245,255,0.03);
+  --transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+
+body.day-mode {
+  --bg-primary: #e8f4f8;
+  --bg-secondary: #d0e8f0;
+  --bg-card: #f0f8ff;
+  --bg-panel: #e0f0f8;
+  --text-primary: #0a2030;
+  --text-secondary: #1a4060;
+  --text-muted: #4a7090;
+  --border: #90c0d8;
+  --border-glow: #00a8b533;
+  --glass: rgba(0,168,181,0.05);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Cairo', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  cursor: default;
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--cyan-dim); border-radius: 2px; }
+
+#matrix-canvas {
+  position: fixed; top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none; z-index: 0;
+  opacity: 0.04;
+}
+
+.scanlines {
+  position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,245,255,0.015) 2px, rgba(0,245,255,0.015) 4px);
+}
+
+.app-wrapper {
+  position: relative; z-index: 2;
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  grid-template-rows: 60px 1fr;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.top-nav {
+  grid-column: 1/-1;
+  background: rgba(2,4,8,0.95);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 16px; gap: 12px;
+  backdrop-filter: blur(20px);
+  position: relative; z-index: 100;
+}
+body.day-mode .top-nav { background: rgba(232,244,248,0.95); }
+
+.logo-area { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+.logo-icon {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--cyan), var(--purple));
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-family: 'Orbitron', sans-serif; font-weight: 900; color: #000;
+  animation: pulse-logo 2s ease-in-out infinite;
+  cursor: pointer;
+}
+@keyframes pulse-logo {
+  0%,100% { box-shadow: 0 0 10px var(--cyan), 0 0 20px var(--cyan)33; }
+  50% { box-shadow: 0 0 20px var(--cyan), 0 0 40px var(--cyan)66; }
+}
+.logo-text { font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: 900; color: var(--cyan); letter-spacing: 4px; }
+.logo-sub { font-family: 'Share Tech Mono', monospace; font-size: 9px; color: var(--text-muted); letter-spacing: 2px; }
+
+.nav-right { display: flex; align-items: center; gap: 10px; }
+
+.nav-status {
+  display: flex; align-items: center; gap: 6px;
+  font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--green);
+}
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: blink 1.5s infinite; }
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+.nav-clock { font-family: 'Share Tech Mono', monospace; font-size: 13px; color: var(--cyan); }
+
+.nav-btn {
+  background: var(--glass); border: 1px solid var(--border);
+  color: var(--text-secondary); padding: 6px 14px;
+  border-radius: 4px; cursor: pointer; font-family: 'Cairo', sans-serif;
+  font-size: 13px; transition: var(--transition); white-space: nowrap;
+}
+.nav-btn:hover { border-color: var(--cyan); color: var(--cyan); background: rgba(0,245,255,0.08); }
+.nav-btn.primary { border-color: var(--cyan); color: var(--cyan); }
+
+/* Inbox button */
+.inbox-btn {
+  position: relative;
+  background: var(--glass); border: 1px solid var(--border);
+  color: var(--text-secondary); padding: 6px 12px;
+  border-radius: 4px; cursor: pointer; font-size: 18px;
+  transition: var(--transition);
+}
+.inbox-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+.inbox-count {
+  position: absolute; top: -4px; right: -4px;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--red); color: #fff; font-size: 9px;
+  display: none; align-items: center; justify-content: center;
+  font-family: 'Share Tech Mono', monospace;
+}
+.inbox-count.show { display: flex; }
+
+.sidebar {
+  background: rgba(2,4,8,0.97);
+  border-left: 1px solid var(--border);
+  display: flex; flex-direction: column; align-items: center;
+  padding: 8px 0; gap: 4px;
+  overflow: hidden; position: relative; z-index: 50;
+}
+body.day-mode .sidebar { background: rgba(224,240,248,0.97); }
+
+.sb-btn {
+  width: 44px; height: 44px;
+  background: none; border: none; color: var(--text-muted);
+  border-radius: 6px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; transition: var(--transition); position: relative;
+}
+.sb-btn:hover, .sb-btn.active {
+  color: var(--cyan); background: rgba(0,245,255,0.08);
+}
+.sb-btn.active::before {
+  content: ''; position: absolute; right: 0;
+  width: 2px; height: 60%; background: var(--cyan);
+  border-radius: 2px 0 0 2px;
+}
+.sb-tooltip {
+  position: absolute; right: 54px; background: var(--bg-card);
+  border: 1px solid var(--border); color: var(--text-primary);
+  padding: 4px 10px; border-radius: 4px; font-size: 12px; white-space: nowrap;
+  pointer-events: none; opacity: 0; transition: opacity 0.2s;
+  font-family: 'Cairo', sans-serif;
+}
+.sb-btn:hover .sb-tooltip { opacity: 1; }
+
+.sb-divider { width: 30px; height: 1px; background: var(--border); margin: 4px 0; }
+.sb-spacer { flex: 1; }
+
+.main-content {
+  display: flex; overflow: hidden; position: relative;
+}
+
+.view { display: none; flex: 1; overflow: hidden; }
+.view.active { display: flex; }
+
+.chat-layout {
+  display: grid;
+  grid-template-columns: 200px 1fr 220px;
+  width: 100%; height: 100%;
+}
+
+.rooms-panel {
+  background: var(--bg-secondary);
+  border-left: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.panel-header {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  font-family: 'Orbitron', sans-serif; font-size: 11px;
+  color: var(--cyan); letter-spacing: 2px;
+  display: flex; align-items: center; gap: 8px;
+}
+.panel-header span { color: var(--text-muted); font-size: 9px; font-family: 'Share Tech Mono', monospace; }
+
+.rooms-list { flex: 1; overflow-y: auto; padding: 8px; }
+.room-item {
+  padding: 8px 10px; border-radius: 6px; cursor: pointer;
+  display: flex; align-items: center; gap: 8px;
+  transition: var(--transition); margin-bottom: 3px;
+}
+.room-item:hover { background: rgba(0,245,255,0.06); }
+.room-item.active { background: rgba(0,245,255,0.12); border: 1px solid var(--border-glow); }
+.room-icon { font-size: 14px; }
+.room-info { flex: 1; min-width: 0; }
+.room-name { font-size: 13px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.room-count { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--text-muted); }
+.room-status { width: 7px; height: 7px; border-radius: 50%; }
+.room-status.open { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.room-status.closed { background: var(--red); }
+
+.chat-area {
+  display: flex; flex-direction: column; overflow: hidden;
+  background: var(--bg-primary);
+}
+
+.chat-header {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-secondary);
+  display: flex; align-items: center; gap: 12px;
+}
+.chat-room-name { font-family: 'Orbitron', sans-serif; font-size: 14px; color: var(--cyan); }
+.chat-room-desc { font-size: 12px; color: var(--text-muted); }
+.chat-header-actions { margin-right: auto; display: flex; gap: 8px; }
+
+.messages-container {
+  flex: 1; overflow-y: auto;
+  padding: 16px; display: flex; flex-direction: column; gap: 4px;
+}
+
+.system-msg {
+  text-align: center; padding: 6px 0;
+  font-family: 'Share Tech Mono', monospace; font-size: 11px;
+  color: var(--cyan-dim); opacity: 0.7;
+}
+
+.msg-group { display: flex; gap: 10px; padding: 6px 0; }
+.msg-avatar {
+  width: 36px; height: 36px; border-radius: 6px;
+  background: linear-gradient(135deg, var(--bg-card), var(--bg-panel));
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; cursor: pointer; flex-shrink: 0;
+  transition: var(--transition); overflow: hidden;
+}
+.msg-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 5px; }
+.msg-avatar:hover { border-color: var(--cyan); transform: scale(1.05); }
+.msg-body { flex: 1; min-width: 0; }
+.msg-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; flex-wrap: wrap; }
+.msg-username { font-size: 13px; font-weight: 700; cursor: pointer; }
+.msg-username:hover { text-decoration: underline; }
+.msg-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 1px 7px; border-radius: 3px;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.5px;
+  border: 1px solid; font-family: 'Share Tech Mono', monospace;
+}
+/* Badge with image support */
+.msg-badge img, .msg-badge-img {
+  width: 16px; height: 16px; object-fit: contain; border-radius: 2px;
+}
+.msg-time { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--text-muted); }
+.msg-text { font-size: 14px; color: var(--text-primary); line-height: 1.6; word-break: break-word; }
+.msg-media { margin-top: 8px; max-width: 300px; border-radius: 8px; overflow: hidden; }
+.msg-media img, .msg-media video { max-width: 100%; border-radius: 8px; border: 1px solid var(--border); display: block; }
+.msg-media audio { width: 100%; margin-top: 4px; }
+.msg-media .gif-badge { font-size: 10px; color: var(--cyan); font-family: 'Share Tech Mono', monospace; margin-bottom: 4px; }
+
+/* Emoji in messages */
+.emoji-in-msg { font-size: 22px; vertical-align: middle; }
+.img-emoji { width: 28px; height: 28px; object-fit: contain; vertical-align: middle; border-radius: 4px; display: inline-block; }
+
+/* Badge colors */
+.badge-owner { background: rgba(255,215,0,0.1); border-color: var(--gold); color: var(--gold); }
+.badge-friend-owner { background: rgba(255,107,0,0.1); border-color: var(--orange); color: var(--orange); }
+.badge-site-admin { background: rgba(157,0,255,0.1); border-color: var(--purple); color: var(--purple); }
+.badge-chat-admin { background: rgba(0,245,255,0.1); border-color: var(--cyan); color: var(--cyan); }
+.badge-monitor-gold { background: rgba(255,215,0,0.08); border-color: #cc9900; color: #ffd700; }
+.badge-monitor-silver { background: rgba(192,192,192,0.08); border-color: var(--silver); color: var(--silver); }
+.badge-monitor-green { background: rgba(0,255,65,0.08); border-color: var(--green); color: var(--green); }
+.badge-monitor-black { background: rgba(255,255,255,0.03); border-color: #555; color: #aaa; }
+.badge-monitor-red { background: rgba(255,0,60,0.08); border-color: var(--red); color: var(--red); }
+.badge-member { background: rgba(0,168,181,0.08); border-color: var(--cyan-dim); color: var(--cyan-dim); }
+.badge-visitor { background: rgba(58,106,133,0.08); border-color: var(--text-muted); color: var(--text-muted); }
+
+.chat-input-area {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-secondary);
+}
+.input-row {
+  display: flex; gap: 8px; align-items: flex-end;
+}
+.chat-input {
+  flex: 1; background: var(--bg-card);
+  border: 1px solid var(--border); border-radius: 8px;
+  color: var(--text-primary); padding: 10px 14px;
+  font-family: 'Cairo', sans-serif; font-size: 14px;
+  resize: none; min-height: 42px; max-height: 120px;
+  transition: var(--transition);
+}
+.chat-input:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 0 2px var(--border-glow); }
+.send-btn {
+  width: 42px; height: 42px;
+  background: linear-gradient(135deg, var(--cyan), var(--cyan-dim));
+  border: none; border-radius: 8px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: #000; transition: var(--transition);
+}
+.send-btn:hover { transform: scale(1.05); box-shadow: 0 0 15px var(--cyan)66; }
+
+.input-tools { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+.tool-btn {
+  background: none; border: 1px solid var(--border); color: var(--text-muted);
+  border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 14px;
+  transition: var(--transition);
+}
+.tool-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+
+/* Voice recording button */
+.voice-btn {
+  background: none; border: 1px solid var(--border); color: var(--text-muted);
+  border-radius: 4px; padding: 4px 10px; cursor: pointer; font-size: 14px;
+  transition: var(--transition); display: flex; align-items: center; gap: 4px;
+  font-family: 'Cairo', sans-serif; font-size: 12px;
+}
+.voice-btn:hover { border-color: var(--red); color: var(--red); }
+.voice-btn.recording { border-color: var(--red); color: var(--red); background: rgba(255,0,60,0.1); animation: pulse-rec 1s infinite; }
+@keyframes pulse-rec { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+/* Pending media preview */
+.pending-media-bar {
+  display: none; align-items: center; gap: 8px;
+  background: rgba(0,245,255,0.05); border: 1px solid var(--border-glow);
+  border-radius: 6px; padding: 6px 10px; margin-bottom: 8px; font-size: 12px;
+}
+.pending-media-bar.show { display: flex; }
+.pending-media-thumb { width: 40px; height: 40px; border-radius: 4px; object-fit: cover; border: 1px solid var(--border); }
+.pending-media-label { flex: 1; color: var(--text-secondary); font-family: 'Share Tech Mono', monospace; font-size: 11px; }
+.pending-media-remove { background: none; border: none; color: var(--red); cursor: pointer; font-size: 16px; }
+
+.users-panel {
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+
+.users-list { flex: 1; overflow-y: auto; padding: 8px; }
+.user-item {
+  padding: 7px 10px; border-radius: 6px; cursor: pointer;
+  display: flex; align-items: center; gap: 8px;
+  transition: var(--transition); margin-bottom: 2px;
+  position: relative;
+}
+.user-item:hover { background: rgba(0,245,255,0.06); }
+.user-avatar-sm {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; border: 1px solid var(--border); flex-shrink: 0;
+  overflow: hidden;
+}
+.user-avatar-sm img { width: 100%; height: 100%; object-fit: cover; }
+.user-info-sm { flex: 1; min-width: 0; }
+.user-name-sm { font-size: 12px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-badge-sm { margin-top: 1px; }
+.user-online { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+
+/* ═══════════ MODALS ═══════════ */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+  display: none; align-items: center; justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+
+.modal {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 0; min-width: 340px; max-width: 90vw;
+  max-height: 90vh; overflow: hidden; display: flex; flex-direction: column;
+  box-shadow: 0 0 40px rgba(0,245,255,0.1);
+  animation: modal-in 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes modal-in { from { transform: scale(0.85) translateY(20px); opacity: 0; } }
+
+.modal-header {
+  padding: 16px 20px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--bg-panel);
+}
+.modal-title { font-family: 'Orbitron', sans-serif; font-size: 14px; color: var(--cyan); letter-spacing: 2px; }
+.modal-close {
+  background: none; border: none; color: var(--text-muted);
+  cursor: pointer; font-size: 18px; transition: var(--transition);
+}
+.modal-close:hover { color: var(--red); }
+.modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+.modal-footer { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; }
+
+/* ═══════════ FORMS ═══════════ */
+.form-group { margin-bottom: 16px; }
+.form-label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.5px; }
+.form-input {
+  width: 100%; background: var(--bg-secondary);
+  border: 1px solid var(--border); border-radius: 6px;
+  color: var(--text-primary); padding: 10px 12px;
+  font-family: 'Cairo', sans-serif; font-size: 14px;
+  transition: var(--transition);
+}
+.form-input:focus { outline: none; border-color: var(--cyan); }
+.form-select {
+  width: 100%; background: var(--bg-secondary);
+  border: 1px solid var(--border); border-radius: 6px;
+  color: var(--text-primary); padding: 10px 12px;
+  font-family: 'Cairo', sans-serif; font-size: 14px;
+  cursor: pointer;
+}
+textarea.form-input { resize: vertical; min-height: 80px; }
+
+/* ═══════════ BUTTONS ═══════════ */
+.btn {
+  padding: 9px 18px; border-radius: 6px; border: none;
+  cursor: pointer; font-family: 'Cairo', sans-serif;
+  font-size: 13px; font-weight: 600; transition: var(--transition);
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.btn-primary { background: linear-gradient(135deg, var(--cyan), var(--cyan-dim)); color: #000; }
+.btn-primary:hover { box-shadow: 0 0 20px var(--cyan)44; transform: translateY(-1px); }
+.btn-danger { background: linear-gradient(135deg, var(--red), #aa0026); color: #fff; }
+.btn-danger:hover { box-shadow: 0 0 20px var(--red)44; }
+.btn-ghost { background: none; border: 1px solid var(--border); color: var(--text-secondary); }
+.btn-ghost:hover { border-color: var(--cyan); color: var(--cyan); }
+.btn-gold { background: linear-gradient(135deg, var(--gold), #cc9900); color: #000; }
+.btn-sm { padding: 5px 12px; font-size: 12px; }
+
+/* ═══════════ AUTH SCREEN ═══════════ */
+#auth-screen {
+  position: fixed; inset: 0; z-index: 500;
+  background: var(--bg-primary);
+  display: flex; align-items: center; justify-content: center;
+}
+.auth-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px; padding: 40px;
+  width: 420px; max-width: 95vw;
+  box-shadow: 0 0 60px rgba(0,245,255,0.08);
+  position: relative; overflow: hidden;
+}
+.auth-box::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+}
+.auth-logo { text-align: center; margin-bottom: 32px; }
+.auth-logo-icon {
+  width: 64px; height: 64px; margin: 0 auto 12px;
+  background: linear-gradient(135deg, var(--cyan), var(--purple));
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: 900; color: #000;
+  animation: pulse-logo 2s ease-in-out infinite;
+}
+.auth-title { font-family: 'Orbitron', sans-serif; font-size: 22px; color: var(--cyan); letter-spacing: 4px; }
+.auth-sub { font-size: 12px; color: var(--text-muted); font-family: 'Share Tech Mono', monospace; letter-spacing: 2px; margin-top: 4px; }
+.auth-tabs { display: flex; margin-bottom: 24px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.auth-tab {
+  flex: 1; padding: 10px; text-align: center; cursor: pointer;
+  font-size: 14px; color: var(--text-muted); transition: var(--transition);
+}
+.auth-tab.active { background: rgba(0,245,255,0.1); color: var(--cyan); }
+.auth-form { display: none; }
+.auth-form.active { display: block; }
+.auth-error { color: var(--red); font-size: 13px; margin-bottom: 12px; display: none; font-family: 'Share Tech Mono', monospace; }
+.auth-error.show { display: block; }
+
+/* ═══════════ DASHBOARD ═══════════ */
+.dashboard-view {
+  flex: 1; overflow-y: auto; padding: 20px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+
+.dash-header {
+  font-family: 'Orbitron', sans-serif; font-size: 16px;
+  color: var(--cyan); letter-spacing: 3px; padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.dash-tabs {
+  display: flex; gap: 4px; flex-wrap: wrap;
+  border-bottom: 1px solid var(--border); margin-bottom: 16px;
+}
+.dash-tab {
+  padding: 8px 16px; cursor: pointer; font-size: 13px;
+  color: var(--text-muted); border-radius: 6px 6px 0 0;
+  transition: var(--transition); border: 1px solid transparent;
+  border-bottom: none;
+}
+.dash-tab.active { color: var(--cyan); border-color: var(--border); background: var(--bg-card); margin-bottom: -1px; }
+
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.stat-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 16px; text-align: center;
+  transition: var(--transition);
+}
+.stat-card:hover { border-color: var(--cyan); box-shadow: 0 0 20px rgba(0,245,255,0.05); }
+.stat-number { font-family: 'Orbitron', sans-serif; font-size: 28px; color: var(--cyan); }
+.stat-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+.stat-icon { font-size: 20px; margin-bottom: 8px; }
+
+.data-table {
+  width: 100%; border-collapse: collapse;
+  font-size: 13px;
+}
+.data-table th {
+  padding: 10px 12px; text-align: right;
+  background: var(--bg-panel); color: var(--text-secondary);
+  font-weight: 600; font-size: 12px; letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+}
+.data-table td {
+  padding: 10px 12px; border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+}
+.data-table tr:hover td { background: rgba(0,245,255,0.03); }
+
+.action-btns { display: flex; gap: 4px; flex-wrap: wrap; }
+
+/* Posts */
+.post-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 10px; overflow: hidden; margin-bottom: 12px;
+  transition: var(--transition);
+}
+.post-card:hover { border-color: var(--border-glow); }
+.post-header { padding: 12px 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); }
+.post-body { padding: 16px; }
+.post-text { font-size: 14px; color: var(--text-primary); line-height: 1.7; }
+.post-footer { padding: 10px 16px; border-top: 1px solid var(--border); display: flex; gap: 12px; }
+.post-action { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 5px; transition: var(--transition); font-family: 'Cairo', sans-serif; }
+.post-action:hover { color: var(--cyan); }
+.compose-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 16px; margin-bottom: 16px;
+}
+
+/* Toast */
+.toast-container { position: fixed; bottom: 20px; left: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+.toast {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 8px; padding: 12px 16px; min-width: 260px;
+  display: flex; align-items: center; gap: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  animation: toast-in 0.3s ease; font-size: 13px;
+}
+@keyframes toast-in { from { transform: translateX(-20px); opacity: 0; } }
+.toast.success { border-color: var(--green); }
+.toast.error { border-color: var(--red); }
+.toast.info { border-color: var(--cyan); }
+.toast-icon { font-size: 16px; }
+
+/* Invisibility */
+.invis-indicator {
+  position: fixed; bottom: 20px; right: 80px;
+  background: rgba(157,0,255,0.15); border: 1px solid var(--purple);
+  color: var(--purple); padding: 6px 12px; border-radius: 20px;
+  font-size: 11px; font-family: 'Share Tech Mono', monospace;
+  display: none; align-items: center; gap: 6px; z-index: 200;
+}
+.invis-indicator.show { display: flex; }
+
+/* Boot Screen */
+#boot-screen {
+  position: fixed; inset: 0; z-index: 999;
+  background: #000;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-family: 'Share Tech Mono', monospace; color: var(--green);
+}
+.boot-line { font-size: 13px; margin: 2px 0; opacity: 0; animation: fadeIn 0.3s forwards; }
+@keyframes fadeIn { to { opacity: 1; } }
+.boot-progress { width: 400px; height: 3px; background: #111; border-radius: 2px; margin-top: 30px; overflow: hidden; }
+.boot-bar { height: 100%; background: var(--green); width: 0; transition: width 2.5s ease; }
+
+/* Mention */
+.mention { color: var(--cyan); font-weight: 600; cursor: pointer; }
+.mention:hover { text-decoration: underline; }
+
+/* Tags */
+.tag { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-family: 'Share Tech Mono', monospace; border: 1px solid; }
+.tag-banned { background: rgba(255,0,60,0.1); border-color: var(--red); color: var(--red); }
+.tag-muted { background: rgba(255,107,0,0.1); border-color: var(--orange); color: var(--orange); }
+.tag-ok { background: rgba(0,255,65,0.1); border-color: var(--green); color: var(--green); }
+
+/* Media preview in report */
+.media-preview { margin-top: 8px; max-width: 200px; max-height: 120px; border-radius: 6px; border: 1px solid var(--border); display: none; }
+
+/* User popup */
+.user-popup {
+  position: fixed; z-index: 800;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 12px; width: 280px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+  animation: modal-in 0.2s ease;
+  display: none;
+}
+.user-popup.show { display: block; }
+.user-popup-banner { height: 70px; background: linear-gradient(135deg, rgba(0,245,255,0.1), rgba(157,0,255,0.1)); border-radius: 12px 12px 0 0; }
+.user-popup-body { padding: 10px 16px 16px; }
+.user-popup-avatar {
+  width: 56px; height: 56px; border-radius: 10px; background: var(--bg-panel);
+  border: 2px solid var(--border); display: flex; align-items: center;
+  justify-content: center; font-size: 24px; margin-top: -28px; overflow: hidden;
+}
+.user-popup-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.user-popup-name { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-top: 8px; }
+.user-popup-desc { font-size: 12px; color: var(--text-muted); margin-top: 4px; line-height: 1.5; }
+.user-popup-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.user-popup-ranks { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px; }
+
+/* Cyber decorations */
+.cyber-corner {
+  position: fixed; width: 60px; height: 60px; opacity: 0.3; pointer-events: none;
+}
+.cyber-corner.tl { top: 60px; right: 0; border-top: 2px solid var(--cyan); border-right: 2px solid var(--cyan); }
+.cyber-corner.br { bottom: 0; left: 60px; border-bottom: 2px solid var(--cyan); border-left: 2px solid var(--cyan); }
+.text-glow { text-shadow: 0 0 10px var(--cyan)88; }
+
+/* Emoji picker */
+.emoji-grid { display: flex; flex-wrap: wrap; gap: 6px; max-height: 200px; overflow-y: auto; }
+.emoji-item { font-size: 22px; cursor: pointer; padding: 4px; border-radius: 4px; transition: var(--transition); position: relative; }
+.emoji-item:hover { background: rgba(0,245,255,0.1); transform: scale(1.2); }
+.emoji-item img { width: 30px; height: 30px; object-fit: contain; border-radius: 4px; display: block; }
+
+/* DM Modal */
+.dm-layout { display: flex; flex-direction: column; height: 400px; }
+.dm-messages { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.dm-msg { max-width: 75%; padding: 8px 12px; border-radius: 10px; font-size: 13px; line-height: 1.5; }
+.dm-msg.sent { background: rgba(0,245,255,0.1); border: 1px solid var(--border-glow); margin-right: auto; color: var(--text-primary); border-radius: 10px 10px 0 10px; }
+.dm-msg.recv { background: var(--bg-panel); border: 1px solid var(--border); margin-left: auto; color: var(--text-primary); border-radius: 10px 10px 10px 0; }
+.dm-msg small { display: block; font-size: 10px; color: var(--text-muted); margin-top: 3px; font-family: 'Share Tech Mono', monospace; }
+.dm-msg .dm-media { max-width: 200px; margin-top: 6px; border-radius: 6px; display: block; }
+.dm-input-area { padding: 12px; border-top: 1px solid var(--border); display: flex; gap: 6px; align-items: flex-end; flex-wrap: wrap; }
+.dm-input { flex: 1; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary); padding: 8px 12px; font-family: 'Cairo', sans-serif; font-size: 13px; resize: none; min-height: 36px; min-width: 120px; }
+.dm-input:focus { outline: none; border-color: var(--cyan); }
+
+/* Inbox */
+.inbox-list { display: flex; flex-direction: column; gap: 6px; }
+.inbox-item {
+  background: var(--bg-secondary); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 14px; cursor: pointer;
+  transition: var(--transition); display: flex; align-items: center; gap: 10px;
+}
+.inbox-item:hover { border-color: var(--cyan); }
+.inbox-item.unread { border-color: var(--cyan-dim); background: rgba(0,245,255,0.04); }
+.inbox-item .inbox-avatar { font-size: 24px; width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
+.inbox-item .inbox-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.inbox-item .inbox-info { flex: 1; min-width: 0; }
+.inbox-item .inbox-name { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+.inbox-item .inbox-preview { font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.inbox-item .inbox-time { font-size: 10px; color: var(--text-muted); font-family: 'Share Tech Mono', monospace; }
+.inbox-notif-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--cyan); flex-shrink: 0; }
+
+/* Profile avatar upload */
+.avatar-upload-area {
+  border: 2px dashed var(--border); border-radius: 10px; padding: 16px;
+  text-align: center; cursor: pointer; transition: var(--transition);
+  margin-bottom: 12px;
+}
+.avatar-upload-area:hover { border-color: var(--cyan); }
+.avatar-preview-img {
+  width: 80px; height: 80px; border-radius: 10px; object-fit: cover;
+  border: 2px solid var(--cyan); margin: 0 auto 8px; display: block;
+}
+
+/* Admin DM log */
+.dm-log-item {
+  background: var(--bg-secondary); border: 1px solid var(--border);
+  border-radius: 6px; padding: 8px 12px; margin-bottom: 6px; font-size: 12px;
+}
+.dm-log-item .dm-log-meta { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--text-muted); margin-bottom: 4px; }
+
+/* Copyright footer */
+.site-copyright {
+  position: fixed; bottom: 4px; left: 50%; transform: translateX(-50%);
+  font-family: 'Share Tech Mono', monospace; font-size: 10px;
+  color: var(--text-muted); opacity: 0.4; pointer-events: none; z-index: 1;
+  white-space: nowrap;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .chat-layout { grid-template-columns: 1fr; }
+  .rooms-panel, .users-panel { display: none; }
+  .app-wrapper { grid-template-columns: 1fr; }
+  .sidebar { flex-direction: row; height: 56px; width: 100%; border-left: none; border-top: 1px solid var(--border); order: 3; }
+  .app-wrapper { grid-template-rows: 60px 1fr 56px; }
+  .sb-btn { width: 44px; height: 44px; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<!-- Boot Screen -->
+<div id="boot-screen">
+  <div id="boot-lines"></div>
+  <div class="boot-progress"><div class="boot-bar" id="boot-bar"></div></div>
+</div>
+
+<!-- Matrix Canvas -->
+<canvas id="matrix-canvas"></canvas>
+<div class="scanlines"></div>
+
+<!-- Cyber Corners -->
+<div class="cyber-corner tl"></div>
+<div class="cyber-corner br"></div>
+
+<!-- Copyright -->
+<div class="site-copyright">© 𝑬𝑺𝑪𝑨𝑵𝑶𝑹 — All Rights Reserved</div>
+
+<!-- Auth Screen -->
+<div id="auth-screen" style="display:none;">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <div class="auth-logo-icon">𝑬</div>
+      <div class="auth-title">𝑬𝑺𝑪𝑨𝑵𝑶𝑹</div>
+      <div class="auth-sub">// SECURE_NETWORK_v2.0 //</div>
+    </div>
+    <div class="auth-tabs">
+      <div class="auth-tab active" onclick="switchAuthTab('login')">دخول</div>
+      <div class="auth-tab" onclick="switchAuthTab('register')">تسجيل</div>
+    </div>
+    <div class="auth-form active" id="login-form">
+      <div class="auth-error" id="login-error"></div>
+      <div class="form-group">
+        <label class="form-label">البريد الإلكتروني</label>
+        <input class="form-input" id="login-email" type="email" placeholder="user@escanor.net" dir="ltr">
+      </div>
+      <div class="form-group">
+        <label class="form-label">كلمة المرور</label>
+        <input class="form-input" id="login-pass" type="password" placeholder="••••••••" dir="ltr">
+      </div>
+      <button class="btn btn-primary" style="width:100%" onclick="doLogin()">تسجيل الدخول</button>
+    </div>
+    <div class="auth-form" id="register-form">
+      <div class="auth-error" id="reg-error"></div>
+      <div class="form-group">
+        <label class="form-label">اسم المستخدم</label>
+        <input class="form-input" id="reg-name" type="text" placeholder="ESCANOR_USER">
+      </div>
+      <div class="form-group">
+        <label class="form-label">البريد الإلكتروني</label>
+        <input class="form-input" id="reg-email" type="email" placeholder="user@escanor.net" dir="ltr">
+      </div>
+      <div class="form-group">
+        <label class="form-label">كلمة المرور</label>
+        <input class="form-input" id="reg-pass" type="password" placeholder="••••••••" dir="ltr">
+      </div>
+      <button class="btn btn-primary" style="width:100%" onclick="doRegister()">إنشاء الحساب</button>
+    </div>
+  </div>
+</div>
+
+<!-- Main App -->
+<div class="app-wrapper" id="main-app" style="display:none;">
+  <!-- Top Nav -->
+  <nav class="top-nav">
+    <div class="nav-right">
+      <div class="nav-status"><div class="status-dot"></div><span id="nav-status-text">ONLINE</span></div>
+      <div class="nav-clock" id="nav-clock">00:00:00</div>
+    </div>
+    <div style="flex:1"></div>
+    <div id="user-invis-badge" style="display:none; align-items:center; gap:6px; font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--purple);">👁️ وضع التخفي</div>
+    <div id="nav-username" style="font-size:13px; color:var(--text-secondary);">-</div>
+    <div id="nav-badge"></div>
+    <!-- Inbox button -->
+    <button class="inbox-btn" onclick="showModal('inbox-modal')" title="صندوق الوريد">
+      📬
+      <span class="inbox-count" id="inbox-count">0</span>
+    </button>
+    <button class="nav-btn" onclick="showModal('profile-modal')">الملف الشخصي</button>
+    <button class="nav-btn btn-primary" id="admin-btn" onclick="switchView('dashboard')" style="display:none;">لوحة التحكم</button>
+    <button class="nav-btn" onclick="doLogout()">خروج</button>
+    <div class="logo-area">
+      <div class="logo-text">𝑬𝑺𝑪𝑨𝑵𝑶𝑹</div>
+      <div>
+        <div class="logo-icon" onclick="switchView('chat')">𝑬</div>
+        <div class="logo-sub">SECURE NET</div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <button class="sb-btn active" onclick="switchView('chat'); setSbActive(this)" title="الغرف">
+      💬<div class="sb-tooltip">الغرف</div>
+    </button>
+    <button class="sb-btn" onclick="switchView('posts'); setSbActive(this)">
+      📢<div class="sb-tooltip">البوستات</div>
+    </button>
+    <button class="sb-btn" onclick="switchView('members'); setSbActive(this)">
+      👥<div class="sb-tooltip">الأعضاء</div>
+    </button>
+    <div class="sb-divider"></div>
+    <button class="sb-btn" onclick="toggleTheme(this)">
+      🌙<div class="sb-tooltip">الوضع الليلي / النهاري</div>
+    </button>
+    <button class="sb-btn" id="invis-btn" onclick="toggleInvisibility(this)" style="display:none;">
+      👁️<div class="sb-tooltip">وضع التخفي</div>
+    </button>
+    <div class="sb-spacer"></div>
+    <button class="sb-btn" onclick="showModal('report-modal')" style="position:relative;">
+      🚩<div class="sb-tooltip">بلاغ</div>
+    </button>
+    <button class="sb-btn" onclick="showModal('profile-modal')">
+      👤<div class="sb-tooltip">ملفي الشخصي</div>
+    </button>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-content">
+
+    <!-- Chat View -->
+    <div class="view active" id="view-chat">
+      <div class="chat-layout">
+        <!-- Rooms Panel -->
+        <div class="rooms-panel">
+          <div class="panel-header">⬡ الغرف <span id="rooms-count">0/5</span></div>
+          <div class="rooms-list" id="rooms-list"></div>
+        </div>
+
+        <!-- Chat Area -->
+        <div class="chat-area">
+          <div class="chat-header">
+            <div>
+              <div class="chat-room-name" id="current-room-name">الغرفة الرئيسية</div>
+              <div class="chat-room-desc" id="current-room-desc">منطقة عامة للجميع</div>
+            </div>
+            <div class="chat-header-actions">
+              <button class="nav-btn btn-sm" id="room-users-btn" onclick="showRoomUsers()">👥 أعضاء الغرفة</button>
+            </div>
+          </div>
+          <div class="messages-container" id="messages-container"></div>
+          <div class="chat-input-area" id="chat-input-area">
+            <!-- Pending media bar -->
+            <div class="pending-media-bar" id="pending-media-bar">
+              <span id="pending-media-label" class="pending-media-label">لا يوجد ملف</span>
+              <button class="pending-media-remove" onclick="clearPendingMedia()">✕</button>
+            </div>
+            <div class="input-tools">
+              <button class="tool-btn" onclick="showModal('emoji-modal')" title="إيموجي">😀</button>
+              <button class="tool-btn" title="صورة/GIF" onclick="triggerFileInput('image', 'chat')">🖼️</button>
+              <button class="tool-btn" title="فيديو" onclick="triggerFileInput('video', 'chat')">🎬</button>
+              <button class="voice-btn" id="voice-rec-btn" onclick="toggleVoiceRecording()" title="تسجيل صوتي">🎙️ <span id="voice-rec-label">تسجيل</span></button>
+              <button class="tool-btn" onclick="insertMention()" title="منشن">@</button>
+            </div>
+            <div class="input-row">
+              <textarea class="chat-input" id="chat-input" placeholder="اكتب رسالتك هنا..." rows="1" onkeydown="handleChatKey(event)" oninput="autoResize(this)"></textarea>
+              <button class="send-btn" onclick="sendMessage()">➤</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Users Panel -->
+        <div class="users-panel">
+          <div class="panel-header">⬡ الأعضاء</div>
+          <div class="users-list" id="users-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Posts View -->
+    <div class="view" id="view-posts">
+      <div class="dashboard-view">
+        <div class="dash-header">⬡ البوستات</div>
+        <div class="compose-card" id="compose-area" style="display:none;">
+          <div class="form-group">
+            <textarea class="form-input" id="post-text" placeholder="شارك شيئاً مع المجتمع..." rows="3"></textarea>
+          </div>
+          <div class="pending-media-bar" id="post-pending-bar">
+            <span id="post-pending-label" class="pending-media-label"></span>
+            <button class="pending-media-remove" onclick="clearPostMedia()">✕</button>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <button class="tool-btn" onclick="triggerFileInput('image','post')">🖼️ صورة/GIF</button>
+            <button class="tool-btn" onclick="triggerFileInput('video','post')">🎬 فيديو</button>
+            <button class="tool-btn" onclick="triggerFileInput('audio','post')">🎵 صوت</button>
+            <button class="btn btn-primary btn-sm" style="margin-right:auto" onclick="publishPost()">نشر ⚡</button>
+          </div>
+        </div>
+        <div id="posts-feed"></div>
+      </div>
+    </div>
+
+    <!-- Members View -->
+    <div class="view" id="view-members">
+      <div class="dashboard-view">
+        <div class="dash-header">⬡ المستخدمون</div>
+        <input class="form-input" placeholder="ابحث عن مستخدم..." id="members-search" oninput="filterMembers()" style="margin-bottom:12px;">
+        <div id="members-list-grid"></div>
+      </div>
+    </div>
+
+    <!-- Dashboard View -->
+    <div class="view" id="view-dashboard">
+      <div class="dashboard-view">
+        <div class="dash-header">⬡ لوحة التحكم — 𝑬𝑺𝑪𝑨𝑵𝑶𝑹 CONTROL</div>
+        <div class="dash-tabs" id="dash-tabs"></div>
+        <div id="dash-content"></div>
+      </div>
+    </div>
+
+  </div><!-- end main-content -->
+</div><!-- end app-wrapper -->
+
+<!-- Hidden file inputs - off-screen for mobile compatibility -->
+<div id="file-inputs-wrap" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;overflow:hidden;">
+  <input type="file" id="file-input-image-chat" accept="image/*,image/gif" onchange="handleFileSelect(event,'image','chat')">
+  <input type="file" id="file-input-video-chat" accept="video/*" onchange="handleFileSelect(event,'video','chat')">
+  <input type="file" id="file-input-image-post" accept="image/*,image/gif" onchange="handleFileSelect(event,'image','post')">
+  <input type="file" id="file-input-video-post" accept="video/*" onchange="handleFileSelect(event,'video','post')">
+  <input type="file" id="file-input-audio-post" accept="audio/*" onchange="handleFileSelect(event,'audio','post')">
+  <input type="file" id="file-input-dm" accept="image/*,image/gif,video/*,audio/*" onchange="handleFileDM(event)">
+  <input type="file" id="file-input-avatar" accept="image/*,image/gif" onchange="handleAvatarFile(event)">
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- Invisibility Indicator -->
+<div class="invis-indicator" id="invis-indicator">👁️ وضع التخفي مفعّل</div>
+
+<!-- User Popup -->
+<div class="user-popup" id="user-popup">
+  <div class="user-popup-banner"></div>
+  <div class="user-popup-body">
+    <div class="user-popup-avatar" id="popup-avatar">👤</div>
+    <div class="user-popup-name" id="popup-name">-</div>
+    <div id="popup-badge-wrap" style="margin-top:4px;"></div>
+    <div class="user-popup-ranks" id="popup-all-ranks"></div>
+    <div id="popup-country" style="font-size:12px; color:var(--text-muted); margin-top:4px;"></div>
+    <div class="user-popup-desc" id="popup-desc">-</div>
+    <div class="user-popup-actions" id="popup-actions"></div>
+  </div>
+</div>
+
+<!-- ═══════════ MODALS ═══════════ -->
+
+<!-- Profile Modal -->
+<div class="modal-overlay" id="profile-modal">
+  <div class="modal" style="min-width:420px;">
+    <div class="modal-header">
+      <div class="modal-title">⬡ الملف الشخصي</div>
+      <button class="modal-close" onclick="hideModal('profile-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- Avatar section -->
+      <div style="text-align:center; margin-bottom:20px;">
+        <div id="profile-modal-avatar" style="width:80px;height:80px;border-radius:12px;background:var(--bg-panel);border:2px solid var(--cyan);display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 8px;overflow:hidden;cursor:pointer;" onclick="var el=document.getElementById('file-input-avatar');el.value='';setTimeout(function(){el.click();},50);" title="اضغط لتغيير الصورة">👤</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">اضغط لرفع صورة أو GIF</div>
+        <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm" onclick="var el=document.getElementById('file-input-avatar');el.value='';setTimeout(function(){el.click();},50);">📁 رفع صورة/GIF</button>
+          <button class="btn btn-ghost btn-sm" onclick="showEmojiAvatarPicker()">😀 اختر ايموجي</button>
+        </div>
+      </div>
+      <!-- Rank display -->
+      <div id="profile-rank-display" style="text-align:center;margin-bottom:16px;"></div>
+      <div class="form-group">
+        <label class="form-label">اسم المستخدم</label>
+        <input class="form-input" id="profile-name-input" type="text">
+      </div>
+      <div class="form-group">
+        <label class="form-label">الوصف</label>
+        <textarea class="form-input" id="profile-desc-input" rows="3"></textarea>
+      </div>
+      <div style="display:flex; gap:8px; justify-content:space-between; align-items:center; margin-top:8px;">
+        <button class="btn btn-danger btn-sm" onclick="deleteAccount()">🗑️ حذف الحساب</button>
+        <button class="btn btn-primary" onclick="saveProfile()">💾 حفظ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Emoji Avatar Picker Modal -->
+<div class="modal-overlay" id="emoji-avatar-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">😀 اختر ايموجي للصورة الشخصية</div>
+      <button class="modal-close" onclick="hideModal('emoji-avatar-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="emoji-grid" id="avatar-emoji-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Emoji Modal -->
+<div class="modal-overlay" id="emoji-modal">
+  <div class="modal" style="min-width:380px;">
+    <div class="modal-header">
+      <div class="modal-title">😀 الإيموجي والصور</div>
+      <button class="modal-close" onclick="hideModal('emoji-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--cyan); margin-bottom:10px;">// إيموجي / صور / GIF مخصصة</div>
+      <div class="emoji-grid" id="custom-emoji-grid"></div>
+      <div style="margin-top:16px; font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--text-muted); margin-bottom:10px;">// الإيموجي العامة</div>
+      <div class="emoji-grid" id="general-emoji-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Report Modal -->
+<div class="modal-overlay" id="report-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🚩 تقديم بلاغ</div>
+      <button class="modal-close" onclick="hideModal('report-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">المستخدم المُبلَّغ عنه</label>
+        <input class="form-input" id="report-user" type="text" placeholder="اسم المستخدم">
+      </div>
+      <div class="form-group">
+        <label class="form-label">سبب البلاغ</label>
+        <select class="form-select" id="report-reason">
+          <option value="">اختر السبب</option>
+          <option>سب وشتم</option>
+          <option>مضايقة</option>
+          <option>محتوى مسيء</option>
+          <option>سبام</option>
+          <option>انتهاك القواعد</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">التفاصيل</label>
+        <textarea class="form-input" id="report-details" rows="3" placeholder="اشرح المشكلة بالتفصيل..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">📸 لقطة الشاشة (مطلوبة)</label>
+        <input type="file" accept="image/*" class="form-input" id="report-screenshot" onchange="previewScreenshot(event)">
+        <img class="media-preview" id="screenshot-preview">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="hideModal('report-modal')">إلغاء</button>
+      <button class="btn btn-danger" onclick="submitReport()">🚩 إرسال البلاغ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Room Entry Modal -->
+<div class="modal-overlay" id="room-entry-modal">
+  <div class="modal" style="text-align:center; min-width:280px;">
+    <div class="modal-body" style="padding:30px;">
+      <div style="font-size:48px;" id="room-entry-icon">💬</div>
+      <div style="font-family:'Orbitron',sans-serif; font-size:16px; color:var(--cyan); margin-top:12px;">دخلت الغرفة</div>
+      <div style="font-size:18px; color:var(--text-primary); margin-top:8px;" id="room-entry-name">-</div>
+      <div style="font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--text-muted); margin-top:8px;">// تم الاتصال بنجاح //</div>
+    </div>
+  </div>
+</div>
+
+<!-- Room Users Modal -->
+<div class="modal-overlay" id="room-users-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="room-users-title">👥 أعضاء الغرفة</div>
+      <button class="modal-close" onclick="hideModal('room-users-modal')">✕</button>
+    </div>
+    <div class="modal-body" id="room-users-body"></div>
+  </div>
+</div>
+
+<!-- DM Modal -->
+<div class="modal-overlay" id="dm-modal">
+  <div class="modal" style="min-width:400px;">
+    <div class="modal-header">
+      <div class="modal-title" id="dm-modal-title">💬 رسالة خاصة</div>
+      <button class="modal-close" onclick="hideModal('dm-modal')">✕</button>
+    </div>
+    <div class="dm-layout">
+      <div class="dm-messages" id="dm-messages"></div>
+      <div class="dm-input-area">
+        <textarea class="dm-input" id="dm-input" placeholder="اكتب رسالة..." rows="2" onkeydown="handleDMKey(event)"></textarea>
+        <button class="tool-btn" onclick="var el=document.getElementById('file-input-dm');el.value='';setTimeout(function(){el.click();},50);" title="إرفاق صورة/فيديو/صوت">📎</button>
+        <button class="btn btn-primary btn-sm" onclick="sendDMMessage()">إرسال</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Inbox Modal -->
+<div class="modal-overlay" id="inbox-modal">
+  <div class="modal" style="min-width:380px;">
+    <div class="modal-header">
+      <div class="modal-title">📬 صندوق الوريد</div>
+      <button class="modal-close" onclick="hideModal('inbox-modal')">✕</button>
+    </div>
+    <div class="modal-body" id="inbox-body">
+      <div style="text-align:center;color:var(--text-muted);padding:20px;font-family:'Share Tech Mono',monospace;">لا توجد رسائل</div>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK v9 Compat -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// ⚙️ FIREBASE CONFIG — ضع بيانات مشروعك هنا
+// ═══════════════════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey:            "PASTE_YOUR_API_KEY_HERE",
+  authDomain:        "PASTE_YOUR_PROJECT_ID.firebaseapp.com",
+  databaseURL:       "https://PASTE_YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+  projectId:         "PASTE_YOUR_PROJECT_ID",
+  storageBucket:     "PASTE_YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "PASTE_YOUR_SENDER_ID",
+  appId:             "PASTE_YOUR_APP_ID"
+};
+
+firebase.initializeApp(firebaseConfig);
+const fbAuth = firebase.auth();
+const fbDB   = firebase.database();
+
+// ═══════════════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════════════
+const OWNER_EMAIL = 'moreand458@gmail.com';
+const OWNER_NAME  = '𝑬𝑺𝑪𝑨𝑵𝑶𝑹';
+const SERVER_URL = 'https://escanor.chat.com';
+
+const RANKS = {
+  owner:         { label:'صاحب الموقع',       badge:'badge-owner',         icon:'👑', color:'#ffd700' },
+  friend_owner:  { label:'صديق صاحب الموقع',  badge:'badge-friend-owner',  icon:'🌟', color:'#ff6b00' },
+  site_admin:    { label:'مشرف الموقع',        badge:'badge-site-admin',    icon:'⚡', color:'#9d00ff' },
+  chat_admin:    { label:'مشرف الشات',         badge:'badge-chat-admin',    icon:'🛡️', color:'#00f5ff' },
+  monitor_gold:  { label:'مراقب ذهبي',         badge:'badge-monitor-gold',  icon:'🔶', color:'#ffd700' },
+  monitor_silver:{ label:'مراقب فضي',          badge:'badge-monitor-silver',icon:'⬡',  color:'#c0c0c0' },
+  monitor_green: { label:'مراقب أخضر',         badge:'badge-monitor-green', icon:'🟢', color:'#00ff41' },
+  monitor_black: { label:'مراقب أسود',         badge:'badge-monitor-black', icon:'⬛', color:'#888'    },
+  monitor_red:   { label:'مراقب أحمر',         badge:'badge-monitor-red',   icon:'🔴', color:'#ff003c' },
+  member:        { label:'عضو',                badge:'badge-member',        icon:'◈',  color:'#00a8b5' },
+  visitor:       { label:'زائر',               badge:'badge-visitor',       icon:'◇',  color:'#3a6a85' },
+};
+
+const RANK_PERMISSIONS = {
+  owner:         { canBan:true,  canMute:true,  canPromote:true,  canDelete:true,  canManageRooms:true,  canViewLocation:true,  canInvisible:true,  canPost:true,  canRestart:true,  canAddEmoji:true,  canManageBadges:true,  canViewDashboard:true,  canViewDMs:true  },
+  friend_owner:  { canBan:true,  canMute:true,  canPromote:true,  canDelete:false, canManageRooms:true,  canViewLocation:true,  canInvisible:true,  canPost:true,  canRestart:true,  canAddEmoji:false, canManageBadges:false, canViewDashboard:true,  canViewDMs:true  },
+  site_admin:    { canBan:true,  canMute:true,  canPromote:false, canDelete:false, canManageRooms:false, canViewLocation:true,  canInvisible:true,  canPost:true,  canRestart:true,  canAddEmoji:false, canManageBadges:false, canViewDashboard:true,  canViewDMs:true  },
+  chat_admin:    { canBan:false, canMute:true,  canPromote:false, canDelete:false, canManageRooms:false, canViewLocation:true,  canInvisible:true,  canPost:true,  canRestart:false, canAddEmoji:false, canManageBadges:false, canViewDashboard:true,  canViewDMs:false },
+  monitor_gold:  { canBan:false, canMute:true,  canPromote:false, canDelete:false, canManageRooms:false, canViewLocation:true,  canInvisible:true,  canPost:true,  canRestart:false, canAddEmoji:false, canManageBadges:false, canViewDashboard:true,  canViewDMs:false },
+  monitor_silver:{ canBan:false, canMute:false, canPromote:false, canDelete:false, canManageRooms:false, canViewLocation:true,  canInvisible:true,  canPost:true,  canRestart:false, canAddEmoji:false, canManageBadges:false, canViewDashboard:false, canViewDMs:false },
+  monitor_green: { canBan:false, canMute:false, canPromote:false, canDelete:false, canManageRooms:false, canViewLocation:false, canInvisible:false, canPost:true,  canRestart:false, canAddEmoji:false, canManageBadges:false, canViewDashboard:false, canViewDMs:false },
+  monitor_black: { canBan:false, canMute:false, canPromote:false, canDelete:false, canManageRooms:false, canViewLocation:false, canInvisible:false, canPost:true,  canRestart:false, canAddEmoji:false, canManageBadges:false, canViewDashboard:false, canViewDMs:false },
+  monitor_red:   { canBan:false, canMute:false, canPromote:false, canDelete:false, canManageRooms:false, canViewLocation:false, canInvisible:false, canPost:true,  canRestart:false, canAddEmoji:false, canManageBadges:false, canViewDashboard:false, canViewDMs:false },
+  member:        { canBan:false, canMute:false, canPromote:false, canDelete:false, canManageRooms:false, canViewLocation:false, canInvisible:false, canPost:true,  canRestart:false, canAddEmoji:false, canManageBadges:false, canViewDashboard:false, canViewDMs:false },
+  visitor:       { canBan:false, canMute:false, canPromote:false, canDelete:false, canManageRooms:false, canViewLocation:false, canInvisible:false, canPost:false, canRestart:false, canAddEmoji:false, canManageBadges:false, canViewDashboard:false, canViewDMs:false },
+};
+
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+let users        = {};
+let rooms        = {};
+let messages     = {};
+let posts        = {};
+let reports      = {};
+let penalties    = {};
+let customEmojis = {};
+let dmMessages   = {};
+let userVisits   = {};
+let currentUser  = null;
+let currentRoom  = 'main';
+let isInvisible  = false;
+let dayMode      = false;
+let activeDMUser = null;
+let pendingChatMedia = null;
+let pendingPostMedia = null;
+let pendingDMMedia   = null;
+let mediaRecorder    = null;
+let audioChunks      = [];
+let isRecording      = false;
+
+// Active Firebase listeners (to detach on room change)
+let msgListener  = null;
+let dmListener   = null;
+
+// ═══════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════
+function nowStr() {
+  const n = new Date();
+  return String(n.getHours()).padStart(2,'0') + ':' + String(n.getMinutes()).padStart(2,'0');
+}
+function getDMKey(uid1, uid2) { return [uid1, uid2].sort().join('_'); }
+function usersArr()  { return Object.entries(users).map(([id,u]) => ({...u, id})); }
+function roomsArr()  { return Object.entries(rooms).map(([id,r]) => ({...r, id})); }
+
+async function serverCall(method, path, data) {
+  if (!SERVER_URL) return { ok: true };
+  const token = await fbAuth.currentUser?.getIdToken();
+  const opts  = {
+    method,
+    headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+token }
+  };
+  if (data) opts.body = JSON.stringify(data);
+  const res = await fetch(SERVER_URL + path, opts);
+  return res.json();
+}
+
+// ═══════════════════════════════════════════════════════════
+// REAL-TIME FIREBASE LISTENERS (Global — always on)
+// ═══════════════════════════════════════════════════════════
+function startGlobalListeners() {
+  // Users
+  fbDB.ref('users').on('value', snap => {
+    users = snap.val() || {};
+    renderUsersList(); renderMembers();
+  });
+
+  // Rooms + online members
+  fbDB.ref('rooms').on('value', snap => {
+    rooms = snap.val() || {};
+    // Merge online members
+    fbDB.ref('online').get().then(onlineSnap => {
+      const online = onlineSnap.val() || {};
+      Object.keys(rooms).forEach(rid => {
+        rooms[rid].users = Object.keys(online).filter(uid => online[uid]?.room === rid);
+      });
+      renderRooms(); renderUsersList();
+    });
+  });
+
+  // Online presence
+  fbDB.ref('online').on('value', snap => {
+    const online = snap.val() || {};
+    Object.keys(rooms).forEach(rid => {
+      rooms[rid].users = Object.keys(online).filter(uid => online[uid]?.room === rid);
+    });
+    renderRooms(); renderUsersList();
+  });
+
+  // Posts
+  fbDB.ref('posts').on('value', snap => {
+    posts = snap.val() || {};
+    renderPosts();
+  });
+
+  // Custom Emojis
+  fbDB.ref('emojis').on('value', snap => {
+    customEmojis = snap.val() || {};
+    initEmojis();
+  });
+
+  // Penalties
+  fbDB.ref('penalties').on('value', snap => {
+    penalties = snap.val() || {};
+    if (currentUser && penalties[currentUser.uid]) {
+      const pen = penalties[currentUser.uid];
+      if (pen.type === 'ban') {
+        toast('🚫 تم حظرك من الموقع', 'error');
+        setTimeout(() => doLogout(), 2000);
+      } else if (pen.type === 'mute') {
+        document.getElementById('chat-input-area').style.display = 'none';
+        toast('🔇 تم كتمك', 'error');
+      }
+    } else if (currentUser) {
+      document.getElementById('chat-input-area').style.display = '';
+    }
+  });
+
+  // DM notifications for current user
+  if (currentUser) {
+    fbDB.ref('dm_notifs/' + currentUser.uid).on('value', snap => {
+      const notifs = snap.val() || {};
+      const total  = Object.values(notifs).reduce((s, v) => s + (v || 0), 0);
+      const badge  = document.getElementById('inbox-count');
+      if (total > 0) { badge.textContent = total; badge.classList.add('show'); }
+      else           { badge.classList.remove('show'); }
+    });
+  }
+}
+
+function listenToRoom(roomId) {
+  // Detach previous listener
+  if (msgListener) {
+    fbDB.ref('messages/' + msgListener).off();
+    msgListener = null;
+  }
+  if (!messages[roomId]) messages[roomId] = {};
+  msgListener = roomId;
+
+  fbDB.ref('messages/' + roomId).on('child_added', snap => {
+    const msg = { ...snap.val(), id: snap.key };
+    if (!messages[roomId]) messages[roomId] = {};
+    messages[roomId][snap.key] = msg;
+    renderMessages();
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// ONLINE PRESENCE
+// ═══════════════════════════════════════════════════════════
+function setOnlineStatus(room) {
+  if (!currentUser) return;
+  const ref = fbDB.ref('online/' + currentUser.uid);
+  ref.set({ name: currentUser.name, room, rank: currentUser.rank, updatedAt: firebase.database.ServerValue.TIMESTAMP });
+  ref.onDisconnect().remove();
+}
+
+// ═══════════════════════════════════════════════════════════
+// BOOT SCREEN
+// ═══════════════════════════════════════════════════════════
+const bootLines = [
+  '[ OK ] 𝑬𝑺𝑪𝑨𝑵𝑶𝑹 OS v2.0 initializing...',
+  '[ OK ] Loading security modules...',
+  '[ OK ] Connecting to Firebase network...',
+  '[ OK ] Real-time database syncing...',
+  '[ OK ] Encryption layer online...',
+  '[ OK ] Anti-spam shield activated...',
+  '[ OK ] DDoS protection layer online...',
+  '[ OK ] Chat engine ready...',
+  '[ OK ] All systems operational.',
+  '> Welcome to 𝑬𝑺𝑪𝑨𝑵𝑶𝑹 — Stay secure. ⚡',
+];
+
+function runBoot() {
+  const el  = document.getElementById('boot-lines');
+  const bar = document.getElementById('boot-bar');
+  let i = 0;
+  const iv = setInterval(() => {
+    if (i < bootLines.length) {
+      const d = document.createElement('div');
+      d.className = 'boot-line';
+      d.textContent = bootLines[i];
+      d.style.color = i === bootLines.length - 1 ? 'var(--cyan)' : 'var(--green)';
+      el.appendChild(d); bar.style.width = ((i + 1) / bootLines.length * 100) + '%';
+      i++;
+    } else {
+      clearInterval(iv);
+      setTimeout(() => {
+        const bs = document.getElementById('boot-screen');
+        bs.style.opacity = '0'; bs.style.transition = 'opacity 0.5s';
+        setTimeout(() => {
+          bs.style.display = 'none';
+          // Firebase Auth state check
+          fbAuth.onAuthStateChanged(async fbUser => {
+            if (fbUser) {
+              // Load user profile from DB
+              const snap = await fbDB.ref('users/' + fbUser.uid).get();
+              if (snap.exists()) {
+                currentUser = { ...snap.val(), uid: fbUser.uid };
+                loginSuccess(currentUser, false);
+              } else {
+                document.getElementById('auth-screen').style.display = 'flex';
+              }
+            } else {
+              document.getElementById('auth-screen').style.display = 'flex';
+            }
+          });
+        }, 500);
+      }, 600);
+    }
+  }, 200);
+}
+
+// ═══════════════════════════════════════════════════════════
+// MATRIX
+// ═══════════════════════════════════════════════════════════
+function initMatrix() {
+  const canvas = document.getElementById('matrix-canvas');
+  const ctx    = canvas.getContext('2d');
+  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+  const cols  = Math.floor(canvas.width / 16);
+  const drops = Array(cols).fill(1);
+  setInterval(() => {
+    ctx.fillStyle = 'rgba(2,4,8,0.05)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle = '#00ff41'; ctx.font = '12px Share Tech Mono';
+    drops.forEach((y,x) => {
+      const c = String.fromCharCode(0x30A0 + Math.random()*96);
+      ctx.fillText(c, x*16, y*16);
+      if(y*16 > canvas.height && Math.random() > 0.975) drops[x] = 0;
+      drops[x]++;
+    });
+  }, 50);
+}
+
+function updateClock() {
+  const n = new Date();
+  document.getElementById('nav-clock').textContent =
+    String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+':'+String(n.getSeconds()).padStart(2,'0');
+}
+setInterval(updateClock, 1000);
+
+// ═══════════════════════════════════════════════════════════
+// AUTH — Firebase
+// ═══════════════════════════════════════════════════════════
+function switchAuthTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active',(i===0&&tab==='login')||(i===1&&tab==='register')));
+  document.getElementById('login-form').classList.toggle('active', tab==='login');
+  document.getElementById('register-form').classList.toggle('active', tab==='register');
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  const err   = document.getElementById('login-error');
+  if(!email||!pass) { showError(err,'يرجى إدخال البيانات'); return; }
+
+  try {
+    const cred   = await fbAuth.signInWithEmailAndPassword(email, pass);
+    const fbUser = cred.user;
+
+    // Check ban before proceeding
+    const penSnap = await fbDB.ref('penalties/' + fbUser.uid).get();
+    if (penSnap.exists()) {
+      const pen = penSnap.val();
+      if (pen.type === 'ban') {
+        await fbAuth.signOut();
+        return showError(err, pen.until === 'permanent' ? 'حسابك محظور بشكل دائم' : 'حسابك محظور حتى ' + pen.until);
+      }
+    }
+
+    const snap = await fbDB.ref('users/' + fbUser.uid).get();
+    currentUser = { ...snap.val(), uid: fbUser.uid };
+    loginSuccess(currentUser, true);
+  } catch(e) {
+    const msgs = {
+      'auth/user-not-found':   'البريد غير موجود',
+      'auth/wrong-password':   'كلمة المرور غلط',
+      'auth/invalid-email':    'البريد غير صحيح',
+      'auth/too-many-requests':'محاولات كثيرة، انتظر قليلاً',
+    };
+    showError(err, msgs[e.code] || 'فشل تسجيل الدخول');
+  }
+}
+
+async function doRegister() {
+  const name  = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const pass  = document.getElementById('reg-pass').value;
+  const err   = document.getElementById('reg-error');
+  if(!name||!email||!pass) { showError(err,'يرجى تعبئة جميع الحقول'); return; }
+  if(pass.length < 6)       { showError(err,'كلمة المرور 6 أحرف على الأقل'); return; }
+
+  try {
+    const cred   = await fbAuth.createUserWithEmailAndPassword(email, pass);
+    const fbUser = cred.user;
+
+    const rank    = email === OWNER_EMAIL ? 'owner' : 'member';
+    const country = getCountryFromLocale();
+    const profile = {
+      name, email, rank,
+      avatar: rank === 'owner' ? '👑' : '👤',
+      avatarType: 'emoji', avatarData: null,
+      desc: rank === 'owner' ? 'صاحب الموقع' : '',
+      country, createdAt: new Date().toISOString()
+    };
+    await fbDB.ref('users/' + fbUser.uid).set(profile);
+
+    currentUser = { ...profile, uid: fbUser.uid };
+    loginSuccess(currentUser, true);
+  } catch(e) {
+    const msgs = {
+      'auth/email-already-in-use': 'البريد مسجل مسبقاً',
+      'auth/invalid-email':        'البريد غير صحيح',
+      'auth/weak-password':        'كلمة المرور ضعيفة جداً',
+    };
+    showError(err, msgs[e.code] || 'فشل إنشاء الحساب');
+  }
+}
+
+function getCountryFromLocale() {
+  const lang = navigator.language||'en';
+  const map  = {'ar-EG':'🇪🇬 مصر','ar-SA':'🇸🇦 السعودية','ar-AE':'🇦🇪 الإمارات','ar-KW':'🇰🇼 الكويت','ar':'🌍 عربي','en-US':'🇺🇸 أمريكا','en-GB':'🇬🇧 بريطانيا'};
+  return map[lang] || map[lang.split('-')[0]] || '🌐 غير محدد';
+}
+
+function loginSuccess(user, doLog=true) {
+  currentUser = user;
+  if(doLog) logVisit();
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('main-app').style.display    = 'grid';
+  startGlobalListeners();
+  initApp();
+}
+
+async function doLogout() {
+  if(currentUser) {
+    await fbDB.ref('online/' + currentUser.uid).remove();
+  }
+  await fbAuth.signOut();
+  currentUser = null; isInvisible = false;
+  fbDB.ref('users').off(); fbDB.ref('rooms').off(); fbDB.ref('posts').off();
+  fbDB.ref('emojis').off(); fbDB.ref('online').off(); fbDB.ref('penalties').off();
+  if(msgListener) { fbDB.ref('messages/' + msgListener).off(); msgListener = null; }
+  document.getElementById('main-app').style.display    = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-pass').value  = '';
+}
+
+function showError(el, msg) {
+  el.textContent = '⚠ '+msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ═══════════════════════════════════════════════════════════
+// VISIT LOG
+// ═══════════════════════════════════════════════════════════
+async function logVisit() {
+  const devices   = ['موبايل','لابتوب','تابلت','كمبيوتر'];
+  const country   = currentUser?.country || '🌐 غير محدد';
+  const device    = devices[Math.floor(Math.random()*devices.length)];
+  await fbDB.ref('visits').push({
+    userId: currentUser.uid, country, device,
+    time: new Date().toLocaleString('ar-EG'), createdAt: new Date().toISOString()
+  });
+  if(SERVER_URL) serverCall('POST', '/api/log-visit', { country, device });
+}
+
+// ═══════════════════════════════════════════════════════════
+// APP INIT
+// ═══════════════════════════════════════════════════════════
+function initApp() {
+  document.getElementById('nav-username').textContent = currentUser.name;
+  document.getElementById('nav-badge').innerHTML      = makeBadgeHTML(currentUser.rank);
+  refreshProfileModalAvatar();
+  document.getElementById('profile-rank-display').innerHTML = makeBadgeHTML(currentUser.rank);
+  document.getElementById('profile-name-input').value  = currentUser.name;
+  document.getElementById('profile-desc-input').value  = currentUser.desc||'';
+
+  const perms = RANK_PERMISSIONS[currentUser.rank]||{};
+  document.getElementById('admin-btn').style.display = perms.canViewDashboard ? '' : 'none';
+  document.getElementById('invis-btn').style.display = perms.canInvisible      ? '' : 'none';
+
+  const muteActive = penalties[currentUser.uid]?.type === 'mute';
+  document.getElementById('chat-input-area').style.display = muteActive ? 'none' : '';
+  if(perms.canPost) document.getElementById('compose-area').style.display = '';
+
+  initAvatarEmojiGrid();
+  joinRoom('main');
+  toast('مرحباً بك '+currentUser.name+' '+(RANKS[currentUser.rank]?.icon||''), 'success');
+}
+
+// ═══════════════════════════════════════════════════════════
+// BADGE & AVATAR HELPERS
+// ═══════════════════════════════════════════════════════════
+function makeBadgeHTML(rank) {
+  const r = RANKS[rank]; if(!r) return '';
+  const iconHtml = r.iconType==='image' ? `<img src="${r.iconData}" class="msg-badge-img">` : r.icon;
+  return `<span class="msg-badge ${r.badge}">${iconHtml} ${r.label}</span>`;
+}
+function renderAvatarHTML(user, size=36) {
+  if(user.avatarType==='image' && user.avatarData)
+    return `<img src="${user.avatarData}" style="width:${size}px;height:${size}px;object-fit:cover;border-radius:${size<=28?'50%':'6px'};">`;
+  return user.avatar||'👤';
+}
+function formatMsgText(text) { return text.replace(/@(\w+)/g,'<span class="mention">@$1</span>'); }
+
+// ═══════════════════════════════════════════════════════════
+// ROOMS
+// ═══════════════════════════════════════════════════════════
+function renderRooms() {
+  const el = document.getElementById('rooms-list');
+  el.innerHTML = '';
+  const arr = roomsArr();
+  const open = arr.filter(r=>r.open).length;
+  document.getElementById('rooms-count').textContent = open+'/'+arr.length;
+  arr.forEach(room => {
+    const div = document.createElement('div');
+    div.className = 'room-item'+(currentRoom===room.id?' active':'');
+    const memberCount = (room.users||[]).length;
+    div.innerHTML = `<div class="room-icon">${room.icon}</div><div class="room-info"><div class="room-name">${room.name}</div><div class="room-count">${memberCount} عضو</div></div><div class="room-status ${room.open?'open':'closed'}"></div>`;
+    div.onclick = () => {
+      if(!room.open && !RANK_PERMISSIONS[currentUser.rank]?.canManageRooms) { toast('هذه الغرفة مغلقة','error'); return; }
+      joinRoom(room.id);
+    };
+    el.appendChild(div);
+  });
+}
+
+async function joinRoom(roomId) {
+  currentRoom = roomId;
+  const room  = rooms[roomId];
+  if(!room) return;
+
+  document.getElementById('current-room-name').textContent = room.icon+' '+room.name;
+  document.getElementById('current-room-desc').textContent = room.desc||'';
+  document.getElementById('room-entry-icon').textContent   = room.icon;
+  document.getElementById('room-entry-name').textContent   = room.name;
+  showModal('room-entry-modal');
+  setTimeout(() => hideModal('room-entry-modal'), 1800);
+
+  setOnlineStatus(roomId);
+  messages[roomId] = {};
+  listenToRoom(roomId);
+  renderRooms(); renderUsersList();
+}
+
+// ═══════════════════════════════════════════════════════════
+// MESSAGES
+// ═══════════════════════════════════════════════════════════
+function renderMessages() {
+  const el   = document.getElementById('messages-container');
+  el.innerHTML = '';
+  const msgs = Object.values(messages[currentRoom]||{});
+  msgs.forEach(m => {
+    if(m.type==='system') { addSystemMsgEl(m.text); return; }
+    const u = users[m.userId];
+    if(!u) return;
+    const div = document.createElement('div');
+    div.className = 'msg-group';
+    let mediaHTML = '';
+    if(m.media) {
+      if(m.media.type==='image') mediaHTML = `<div class="msg-media"><img src="${m.media.url}" alt="صورة" loading="lazy" style="max-width:280px;"></div>`;
+      else if(m.media.type==='video') mediaHTML = `<div class="msg-media"><video controls style="max-width:280px;"><source src="${m.media.url}"></video></div>`;
+      else if(m.media.type==='audio') mediaHTML = `<div class="msg-media"><audio controls><source src="${m.media.url}"></audio></div>`;
+    }
+    div.innerHTML = `
+      <div class="msg-avatar" onclick="openUserPopup('${m.userId}',event)">${renderAvatarHTML({...u,id:m.userId},36)}</div>
+      <div class="msg-body">
+        <div class="msg-meta">
+          <span class="msg-username" style="color:${RANKS[u.rank]?.color||'#e0f4ff'}" onclick="openUserPopup('${m.userId}',event)">${u.name}</span>
+          ${makeBadgeHTML(u.rank)}
+          <span class="msg-time">${m.time||''}</span>
+        </div>
+        <div class="msg-text">${formatMsgText(m.text||'')}</div>
+        ${mediaHTML}
+      </div>`;
+    el.appendChild(div);
+  });
+  el.scrollTop = el.scrollHeight;
+}
+
+function addSystemMsgEl(text) {
+  const el = document.getElementById('messages-container');
+  const d  = document.createElement('div');
+  d.className = 'system-msg'; d.textContent = '// '+text+' //';
+  el.appendChild(d); el.scrollTop = el.scrollHeight;
+}
+
+// ═══════════════════════════════════════════════════════════
+// SEND MESSAGE — Firebase push
+// ═══════════════════════════════════════════════════════════
+async function sendMessage() {
+  if(isSpam()) { toast('لا ترسل رسائل بسرعة كبيرة!','error'); return; }
+  const input = document.getElementById('chat-input');
+  const text  = input.value.trim();
+  if(!text && !pendingChatMedia) return;
+
+  const pen = penalties[currentUser.uid];
+  if(pen?.type==='mute') { toast('أنت ممنوع من التكلم','error'); return; }
+
+  const room = rooms[currentRoom];
+  if(!room) return;
+  if(!room.open && !RANK_PERMISSIONS[currentUser.rank]?.canManageRooms) { toast('الغرفة مغلقة','error'); return; }
+
+  await fbDB.ref('messages/' + currentRoom).push({
+    userId: currentUser.uid,
+    text:   text||'',
+    time:   nowStr(),
+    type:   'message',
+    media:  pendingChatMedia ? { type: pendingChatMedia.type, url: pendingChatMedia.dataUrl } : null,
+    createdAt: firebase.database.ServerValue.TIMESTAMP
+  });
+
+  input.value = ''; input.style.height = 'auto';
+  clearPendingMedia();
+}
+
+function handleChatKey(e) { if(e.key==='Enter'&&!e.shiftKey) { e.preventDefault(); sendMessage(); } }
+function autoResize(el)   { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,120)+'px'; }
+
+// ═══════════════════════════════════════════════════════════
+// FILE HANDLING
+// ═══════════════════════════════════════════════════════════
+function triggerFileInput(type, context) {
+  const el = document.getElementById('file-input-'+type+'-'+context);
+  if(!el) return; el.value=''; setTimeout(()=>el.click(),50);
+}
+function handleFileSelect(e, type, context) {
+  const file = e.target.files[0]; if(!file) return;
+  if(file.size > 50*1024*1024) { toast('حجم الملف كبير جداً (الحد الأقصى 50MB)','error'); e.target.value=''; return; }
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    const dataUrl = ev.target.result;
+    const label   = type==='image'?'🖼️ صورة/GIF':type==='video'?'🎬 فيديو':'🎵 صوت';
+    if(context==='chat') {
+      pendingChatMedia = { type, dataUrl };
+      document.getElementById('pending-media-bar').classList.add('show');
+      document.getElementById('pending-media-label').textContent = label+' — '+file.name;
+    } else if(context==='post') {
+      pendingPostMedia = { type, dataUrl };
+      document.getElementById('post-pending-bar').classList.add('show');
+      document.getElementById('post-pending-label').textContent = label+' — '+file.name;
+    }
+    toast(label+' جاهز ✅','success');
+  };
+  reader.readAsDataURL(file); e.target.value='';
+}
+function clearPendingMedia() { pendingChatMedia=null; document.getElementById('pending-media-bar').classList.remove('show'); }
+function clearPostMedia()    { pendingPostMedia=null; document.getElementById('post-pending-bar').classList.remove('show'); }
+
+// ═══════════════════════════════════════════════════════════
+// VOICE RECORDING
+// ═══════════════════════════════════════════════════════════
+async function toggleVoiceRecording() {
+  const btn=document.getElementById('voice-rec-btn'), label=document.getElementById('voice-rec-label');
+  if(!isRecording) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+      mediaRecorder = new MediaRecorder(stream); audioChunks=[];
+      mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+      mediaRecorder.onstop = () => {
+        const blob=new Blob(audioChunks,{type:'audio/webm'});
+        const reader=new FileReader(); reader.onload=ev=>{
+          pendingChatMedia={type:'audio',dataUrl:ev.target.result};
+          document.getElementById('pending-media-bar').classList.add('show');
+          document.getElementById('pending-media-label').textContent='🎙️ تسجيل صوتي جاهز';
+          stream.getTracks().forEach(t=>t.stop());
+        }; reader.readAsDataURL(blob);
+      };
+      mediaRecorder.start(); isRecording=true; btn.classList.add('recording'); label.textContent='إيقاف';
+      toast('🔴 جارٍ التسجيل...','info');
+    } catch { toast('لا يمكن الوصول للميكروفون','error'); }
+  } else {
+    mediaRecorder?.stop(); isRecording=false; btn.classList.remove('recording'); label.textContent='تسجيل';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// AVATAR
+// ═══════════════════════════════════════════════════════════
+function handleAvatarFile(e) {
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader(); reader.onload=ev=>{
+    currentUser.avatarData=ev.target.result; currentUser.avatarType='image'; currentUser.avatar='👤';
+    refreshProfileModalAvatar(); toast('تم تحديث الصورة الشخصية ✅','success');
+  }; reader.readAsDataURL(file); e.target.value='';
+}
+function showEmojiAvatarPicker() { showModal('emoji-avatar-modal'); }
+function initAvatarEmojiGrid() {
+  const grid=document.getElementById('avatar-emoji-grid'); if(!grid) return;
+  const avatars=['👤','🧑‍💻','👨‍🔬','🦸','🧙','👾','🤖','🦊','🐉','🦅','💀','🎭','🥷','🦁','🐺','🎯','⚡','🔥','💎','🛡️'];
+  grid.innerHTML='';
+  avatars.forEach(em=>{
+    const d=document.createElement('div'); d.className='emoji-item'; d.textContent=em;
+    d.onclick=()=>{
+      currentUser.avatar=em; currentUser.avatarType='emoji'; currentUser.avatarData=null;
+      refreshProfileModalAvatar(); hideModal('emoji-avatar-modal');
+    }; grid.appendChild(d);
+  });
+}
+function refreshProfileModalAvatar() {
+  const el=document.getElementById('profile-modal-avatar');
+  if(currentUser.avatarType==='image'&&currentUser.avatarData) {
+    el.innerHTML=`<img src="${currentUser.avatarData}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">`;
+  } else { el.innerHTML=currentUser.avatar||'👤'; el.style.fontSize='36px'; }
+}
+
+// ═══════════════════════════════════════════════════════════
+// USERS PANEL
+// ═══════════════════════════════════════════════════════════
+function renderUsersList() {
+  const el=document.getElementById('users-list'); el.innerHTML='';
+  const room=rooms[currentRoom]; if(!room) return;
+  const memberIds=room.users||[];
+  const rankOrder=Object.keys(RANKS);
+  const roomUsers=memberIds.map(id=>({...users[id],id})).filter(Boolean)
+    .sort((a,b)=>rankOrder.indexOf(a.rank)-rankOrder.indexOf(b.rank));
+  roomUsers.forEach(u=>{
+    const div=document.createElement('div'); div.className='user-item';
+    div.innerHTML=`<div class="user-avatar-sm">${renderAvatarHTML(u,28)}</div>
+      <div class="user-info-sm">
+        <div class="user-name-sm" style="color:${RANKS[u.rank]?.color||'var(--text-primary)'}">${u.name}</div>
+        <div class="user-badge-sm">${makeBadgeHTML(u.rank)}</div>
+      </div>`;
+    div.onclick=e=>openUserPopup(u.id,e); el.appendChild(div);
+  });
+}
+
+function renderMembers() { filterMembers(); }
+function filterMembers() {
+  const search=document.getElementById('members-search')?.value.toLowerCase()||'';
+  const el=document.getElementById('members-list-grid'); if(!el) return;
+  el.innerHTML='';
+  const rankOrder=Object.keys(RANKS);
+  Object.entries(users).map(([id,u])=>({...u,id}))
+    .filter(u=>u.name.toLowerCase().includes(search))
+    .sort((a,b)=>rankOrder.indexOf(a.rank)-rankOrder.indexOf(b.rank))
+    .forEach(u=>{
+      const pen=penalties[u.id];
+      const div=document.createElement('div'); div.className='user-item';
+      div.style.cssText='background:var(--bg-card);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;padding:12px;';
+      div.innerHTML=`<div class="user-avatar-sm" style="width:40px;height:40px;font-size:20px;">${renderAvatarHTML(u,40)}</div>
+        <div class="user-info-sm" style="flex:1">
+          <div class="user-name-sm" style="color:${RANKS[u.rank]?.color||'var(--text-primary)'};font-size:14px;">${u.name}</div>
+          <div style="margin-top:3px;">${makeBadgeHTML(u.rank)}</div>
+          <div style="font-size:11px;color:var(--text-muted);font-family:'Share Tech Mono',monospace;margin-top:3px;">${u.country||''}</div>
+        </div>
+        ${pen?`<span class="tag tag-${pen.type==='ban'?'banned':'muted'}">${pen.type==='ban'?'محظور':'مكتوم'}</span>`:'<span class="tag tag-ok">نشط</span>'}`;
+      div.onclick=e=>openUserPopup(u.id,e); el.appendChild(div);
+    });
+}
+
+// ═══════════════════════════════════════════════════════════
+// USER POPUP
+// ═══════════════════════════════════════════════════════════
+function openUserPopup(userId, event) {
+  const u=users[userId]; if(!u) return;
+  const avEl=document.getElementById('popup-avatar');
+  if(u.avatarType==='image'&&u.avatarData) { avEl.innerHTML=`<img src="${u.avatarData}" style="width:100%;height:100%;object-fit:cover;">`; }
+  else { avEl.innerHTML=u.avatar||'👤'; avEl.style.fontSize='24px'; }
+  document.getElementById('popup-name').textContent     = u.name;
+  document.getElementById('popup-badge-wrap').innerHTML  = makeBadgeHTML(u.rank);
+  document.getElementById('popup-all-ranks').innerHTML   = '';
+  document.getElementById('popup-desc').textContent     = u.desc||'لا يوجد وصف';
+  const perms=RANK_PERMISSIONS[currentUser.rank]||{};
+  document.getElementById('popup-country').innerHTML = perms.canViewLocation?`<div style="font-size:12px;color:var(--text-muted);margin-top:4px;">${u.country||'غير محدد'}</div>`:'';
+  const actions=document.getElementById('popup-actions');
+  actions.innerHTML=`<button class="btn btn-ghost btn-sm" onclick="openDM('${userId}')">💬 رسالة خاصة</button>`;
+  if(userId!==currentUser.uid) {
+    actions.innerHTML+=`<button class="btn btn-ghost btn-sm" onclick="reportUser('${userId}')">🚩 بلاغ</button>`;
+  }
+  const popup=document.getElementById('user-popup');
+  const rect=event.target.getBoundingClientRect();
+  popup.style.top=Math.min(rect.bottom+8,window.innerHeight-320)+'px';
+  popup.style.right=Math.max(window.innerWidth-rect.right-8,8)+'px';
+  popup.classList.add('show');
+  document.addEventListener('click',closePopup,{once:true});
+}
+function closePopup(e) { if(!document.getElementById('user-popup').contains(e.target)) document.getElementById('user-popup').classList.remove('show'); }
+function reportUser(userId) {
+  const u=users[userId]; document.getElementById('user-popup').classList.remove('show');
+  document.getElementById('report-user').value=u?.name||''; showModal('report-modal');
+}
+function blockUser(userId) {
+  document.getElementById('user-popup').classList.remove('show');
+  toast('تم حظر المستخدم من قائمتك','success');
+}
+
+// ═══════════════════════════════════════════════════════════
+// DM — Firebase
+// ═══════════════════════════════════════════════════════════
+async function openDM(userId) {
+  document.getElementById('user-popup').classList.remove('show');
+  const u=users[userId]; if(!u) return;
+  activeDMUser=userId;
+  document.getElementById('dm-modal-title').textContent='💬 محادثة مع '+u.name;
+
+  const key=getDMKey(currentUser.uid, userId);
+  if(dmListener) { fbDB.ref('dms/'+dmListener).off(); dmListener=null; }
+  dmMessages[key]={};
+  dmListener=key;
+
+  fbDB.ref('dms/'+key).on('child_added', snap=>{
+    const msg={...snap.val(),id:snap.key};
+    if(!dmMessages[key]) dmMessages[key]={};
+    dmMessages[key][snap.key]=msg;
+    if(activeDMUser===userId) renderDMMessages(userId);
+  });
+
+  // Mark as read
+  fbDB.ref('dm_notifs/'+currentUser.uid+'/'+userId).set(0);
+  renderDMMessages(userId);
+  showModal('dm-modal');
+}
+
+function renderDMMessages(userId) {
+  const el=document.getElementById('dm-messages'); el.innerHTML='';
+  const key=getDMKey(currentUser.uid, userId);
+  const msgs=Object.values(dmMessages[key]||{});
+  if(msgs.length===0) {
+    el.innerHTML='<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:12px;font-family:\'Share Tech Mono\',monospace;">// لا توجد رسائل بعد //</div>';
+    return;
+  }
+  msgs.forEach(m=>{
+    const isSent=m.senderId===currentUser.uid;
+    const div=document.createElement('div'); div.className='dm-msg '+(isSent?'sent':'recv');
+    let mediaHTML='';
+    if(m.media) {
+      if(m.media.type==='image'||m.media.type==='gif') mediaHTML=`<img src="${m.media.url}" class="dm-media" alt="صورة">`;
+      else if(m.media.type==='video') mediaHTML=`<video controls class="dm-media"><source src="${m.media.url}"></video>`;
+      else if(m.media.type==='audio') mediaHTML=`<audio controls style="width:100%;margin-top:4px;"><source src="${m.media.url}"></audio>`;
+    }
+    div.innerHTML=`${m.text?`<span>${m.text}</span>`:''}${mediaHTML}<small>${m.time||''}</small>`;
+    el.appendChild(div);
+  });
+  el.scrollTop=el.scrollHeight;
+}
+
+async function sendDMMessage() {
+  if(!activeDMUser) return;
+  const input=document.getElementById('dm-input');
+  const text=input.value.trim();
+  if(!text&&!pendingDMMedia) return;
+
+  const key=getDMKey(currentUser.uid, activeDMUser);
+  const msg={
+    senderId: currentUser.uid, receiverId: activeDMUser,
+    text: text||'', time: nowStr(),
+    media: pendingDMMedia?{type:pendingDMMedia.type,url:pendingDMMedia.dataUrl}:null,
+    createdAt: firebase.database.ServerValue.TIMESTAMP
+  };
+  await fbDB.ref('dms/'+key).push(msg);
+
+  // Increment notification counter
+  await fbDB.ref('dm_notifs/'+activeDMUser+'/'+currentUser.uid).transaction(v=>(v||0)+1);
+
+  input.value=''; pendingDMMedia=null;
+}
+function handleDMKey(e) { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendDMMessage();} }
+function handleFileDM(e) {
+  const file=e.target.files[0]; if(!file) return;
+  if(file.size>50*1024*1024){toast('حجم الملف كبير جداً','error');e.target.value='';return;}
+  const reader=new FileReader(); reader.onload=ev=>{
+    const t=file.type.startsWith('image')?'image':file.type.startsWith('video')?'video':'audio';
+    pendingDMMedia={type:t,dataUrl:ev.target.result}; toast('📎 '+file.name+' جاهز','success');
+  }; reader.readAsDataURL(file); e.target.value='';
+}
+
+// ═══════════════════════════════════════════════════════════
+// INBOX
+// ═══════════════════════════════════════════════════════════
+function updateInboxCount() {
+  fbDB.ref('dm_notifs/'+currentUser.uid).get().then(snap=>{
+    const notifs=snap.val()||{};
+    const total=Object.values(notifs).reduce((s,v)=>s+(v||0),0);
+    const badge=document.getElementById('inbox-count');
+    if(total>0){badge.textContent=total;badge.classList.add('show');}
+    else badge.classList.remove('show');
+  });
+}
+
+async function renderInbox() {
+  const el=document.getElementById('inbox-body'); el.innerHTML='';
+  const snap=await fbDB.ref('dms').get();
+  const allDMs=snap.val()||{};
+  const myConvs=Object.entries(allDMs).filter(([k])=>k.includes(currentUser.uid));
+  if(myConvs.length===0){
+    el.innerHTML='<div style="text-align:center;color:var(--text-muted);padding:20px;font-family:\'Share Tech Mono\',monospace;">لا توجد رسائل</div>';
+    return;
+  }
+  const notifSnap=await fbDB.ref('dm_notifs/'+currentUser.uid).get();
+  const notifs=notifSnap.val()||{};
+  const list=document.createElement('div'); list.className='inbox-list';
+  myConvs.forEach(([key,conv])=>{
+    const msgs=Object.values(conv||{});
+    if(!msgs.length) return;
+    const last=msgs[msgs.length-1];
+    const otherId=last.senderId===currentUser.uid?last.receiverId:last.senderId;
+    const other=users[otherId]; if(!other) return;
+    const unread=notifs[otherId]||0;
+    const div=document.createElement('div'); div.className='inbox-item'+(unread>0?' unread':'');
+    div.innerHTML=`<div class="inbox-avatar">${renderAvatarHTML({...other,id:otherId},28)}</div>
+      <div class="inbox-info">
+        <div class="inbox-name" style="color:${RANKS[other.rank]?.color||'var(--text-primary)'};">${other.name}</div>
+        <div class="inbox-preview">${last.media?'📎 وسائط':last.text||''}</div>
+      </div>
+      <div><div class="inbox-time">${last.time||''}</div>${unread>0?'<div class="inbox-notif-dot"></div>':''}</div>`;
+    div.onclick=()=>{hideModal('inbox-modal');openDM(otherId);}; list.appendChild(div);
+  });
+  el.appendChild(list);
+}
+
+// ═══════════════════════════════════════════════════════════
+// EMOJI
+// ═══════════════════════════════════════════════════════════
+function initEmojis() {
+  const customEl=document.getElementById('custom-emoji-grid');
+  const generalEl=document.getElementById('general-emoji-grid');
+  if(!customEl||!generalEl) return;
+  customEl.innerHTML='';
+  Object.entries(customEmojis).forEach(([id,em])=>{
+    const d=document.createElement('div'); d.className='emoji-item';
+    if(em.type==='image'||em.type==='gif') d.innerHTML=`<img src="${em.val}" alt="emoji" title="${em.name||''}">`;
+    else d.textContent=em.val||'';
+    d.onclick=()=>{insertEmoji({...em,id});hideModal('emoji-modal');}; customEl.appendChild(d);
+  });
+  const general=['😀','😂','😍','🤔','😎','🥳','🤯','😡','😴','👍','👎','❤️','🔥','💯','🎉','🚀','💻','🔐','🌐','⚡','🛡️','🎯','🔑','💀'];
+  generalEl.innerHTML='';
+  general.forEach(em=>{
+    const d=document.createElement('div'); d.className='emoji-item'; d.textContent=em;
+    d.onclick=()=>{insertEmoji({type:'emoji',val:em});hideModal('emoji-modal');}; generalEl.appendChild(d);
+  });
+}
+function insertEmoji(em) {
+  const inp=document.getElementById('chat-input'); if(!inp) return;
+  if(em.type==='image'||em.type==='gif'){
+    pendingChatMedia={type:'image',dataUrl:em.val};
+    document.getElementById('pending-media-bar').classList.add('show');
+    document.getElementById('pending-media-label').textContent=`${em.type==='gif'?'GIF':'🖼️ صورة'} — ${em.name||'إيموجي مخصص'}`;
+  } else { inp.value+=(em.val||em); }
+  inp.focus();
+}
+function insertMention() {
+  const room=rooms[currentRoom]; if(!room) return;
+  const names=(room.users||[]).map(id=>users[id]).filter(Boolean).map(u=>'@'+u.name).join('، ');
+  if(names) toast('اختر: '+names,'info');
+}
+
+// ═══════════════════════════════════════════════════════════
+// POSTS — Firebase
+// ═══════════════════════════════════════════════════════════
+function renderPosts() {
+  const el=document.getElementById('posts-feed'); if(!el) return;
+  el.innerHTML='';
+  const postsArr=Object.entries(posts).map(([id,p])=>({...p,id})).reverse();
+  if(!postsArr.length){
+    el.innerHTML='<div style="text-align:center;color:var(--text-muted);padding:40px;font-family:\'Share Tech Mono\',monospace;">// لا توجد بوستات بعد //</div>';
+    return;
+  }
+  postsArr.forEach(post=>{
+    const u=users[post.userId]; if(!u) return;
+    const div=document.createElement('div'); div.className='post-card';
+    let mediaHTML='';
+    if(post.media){
+      if(post.media.type==='image') mediaHTML=`<img src="${post.media.url}" style="max-width:100%;border-radius:8px;margin-top:10px;">`;
+      else if(post.media.type==='video') mediaHTML=`<video controls style="max-width:100%;border-radius:8px;margin-top:10px;"><source src="${post.media.url}"></video>`;
+      else if(post.media.type==='audio') mediaHTML=`<audio controls style="width:100%;margin-top:10px;"><source src="${post.media.url}"></audio>`;
+    }
+    div.innerHTML=`
+      <div class="post-header">
+        <div class="user-avatar-sm" style="width:36px;height:36px;font-size:18px;">${renderAvatarHTML({...u,id:post.userId},28)}</div>
+        <div>
+          <div style="font-weight:700;color:${RANKS[u.rank]?.color||'var(--text-primary)'};">${u.name}</div>
+          <div style="display:flex;gap:6px;align-items:center;margin-top:2px;">${makeBadgeHTML(u.rank)}<span style="font-size:11px;color:var(--text-muted);font-family:'Share Tech Mono',monospace;">${post.time||''}</span></div>
+        </div>
+      </div>
+      <div class="post-body"><div class="post-text">${formatMsgText(post.text||'')}</div>${mediaHTML}</div>
+      <div class="post-footer">
+        <button class="post-action" onclick="likePost('${post.id}')">❤️ <span>${post.likes||0}</span></button>
+        <button class="post-action">💬 تعليق</button><button class="post-action">🔗 مشاركة</button>
+      </div>`;
+    el.appendChild(div);
+  });
+}
+
+async function publishPost() {
+  const text=document.getElementById('post-text')?.value.trim();
+  if(!text&&!pendingPostMedia){toast('اكتب شيئاً أو أضف وسيطاً','error');return;}
+  if(!RANK_PERMISSIONS[currentUser.rank]?.canPost){toast('ليس لديك صلاحية النشر','error');return;}
+  await fbDB.ref('posts').push({
+    userId: currentUser.uid, text:text||'',
+    media: pendingPostMedia?{type:pendingPostMedia.type,url:pendingPostMedia.dataUrl}:null,
+    likes:0, time:nowStr(), createdAt: firebase.database.ServerValue.TIMESTAMP
+  });
+  document.getElementById('post-text').value=''; clearPostMedia();
+  toast('تم نشر البوست ⚡','success');
+}
+
+async function likePost(id) {
+  await fbDB.ref('posts/'+id+'/likes').transaction(v=>(v||0)+1);
+}
+
+// ═══════════════════════════════════════════════════════════
+// REPORTS — Firebase
+// ═══════════════════════════════════════════════════════════
+async function submitReport() {
+  const user=document.getElementById('report-user').value.trim();
+  const reason=document.getElementById('report-reason').value;
+  const details=document.getElementById('report-details').value.trim();
+  const screenshot=document.getElementById('report-screenshot').files[0];
+  if(!user||!reason||!details){toast('يرجى ملء جميع الحقول','error');return;}
+  if(!screenshot){toast('لقطة الشاشة مطلوبة ⚠','error');return;}
+  let screenshotData=null;
+  if(screenshot){
+    screenshotData=await new Promise(r=>{const rd=new FileReader();rd.onload=e=>r(e.target.result);rd.readAsDataURL(screenshot);});
+  }
+  await fbDB.ref('reports').push({
+    reporter: currentUser.uid, reported:user, reason, details,
+    screenshot:screenshotData, status:'قيد المراجعة',
+    time:nowStr(), createdAt: firebase.database.ServerValue.TIMESTAMP
+  });
+  hideModal('report-modal'); toast('تم إرسال البلاغ بنجاح 🚩','success');
+}
+function previewScreenshot(e) {
+  const file=e.target.files[0]; const prev=document.getElementById('screenshot-preview');
+  if(file){const r=new FileReader();r.onload=ev=>{prev.src=ev.target.result;prev.style.display='block';};r.readAsDataURL(file);}
+}
+
+// ═══════════════════════════════════════════════════════════
+// PROFILE — Firebase
+// ═══════════════════════════════════════════════════════════
+async function saveProfile() {
+  const name=document.getElementById('profile-name-input').value.trim();
+  const desc=document.getElementById('profile-desc-input').value.trim();
+  if(!name){toast('الاسم مطلوب','error');return;}
+  await fbDB.ref('users/'+currentUser.uid).update({
+    name, desc,
+    avatar:    currentUser.avatar,
+    avatarType:currentUser.avatarType,
+    avatarData:currentUser.avatarData||null
+  });
+  currentUser={...currentUser,name,desc};
+  document.getElementById('nav-username').textContent=name;
+  hideModal('profile-modal'); toast('تم حفظ الملف الشخصي ✅','success');
+}
+
+async function deleteAccount() {
+  if(!confirm('هل أنت متأكد من حذف حسابك؟ لا يمكن التراجع!')) return;
+  await fbDB.ref('users/'+currentUser.uid).remove();
+  await fbDB.ref('online/'+currentUser.uid).remove();
+  await fbAuth.currentUser.delete();
+  doLogout(); toast('تم حذف حسابك','info');
+}
+
+// ═══════════════════════════════════════════════════════════
+// MODALS
+// ═══════════════════════════════════════════════════════════
+function showModal(id) {
+  document.getElementById(id).classList.add('show');
+  if(id==='profile-modal'){
+    refreshProfileModalAvatar();
+    document.getElementById('profile-rank-display').innerHTML=makeBadgeHTML(currentUser.rank);
+    document.getElementById('profile-name-input').value=currentUser.name;
+    document.getElementById('profile-desc-input').value=currentUser.desc||'';
+  }
+  if(id==='inbox-modal') renderInbox();
+}
+function hideModal(id){document.getElementById(id).classList.remove('show');}
+document.querySelectorAll('.modal-overlay').forEach(overlay=>{
+  overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.classList.remove('show');});
+});
+
+// ═══════════════════════════════════════════════════════════
+// VIEWS
+// ═══════════════════════════════════════════════════════════
+function switchView(view) {
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  const target=document.getElementById('view-'+view);
+  if(target) target.classList.add('active');
+  if(view==='dashboard'){
+    if(!RANK_PERMISSIONS[currentUser.rank]?.canViewDashboard){toast('ليس لديك صلاحية','error');return;}
+    initDashboard();
+  }
+  if(view==='members') renderMembers();
+  if(view==='posts')   renderPosts();
+}
+function setSbActive(btn){document.querySelectorAll('.sb-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+function toggleInvisibility(btn){
+  isInvisible=!isInvisible; btn.style.color=isInvisible?'var(--purple)':'';
+  document.getElementById('invis-indicator').classList.toggle('show',isInvisible);
+  document.getElementById('user-invis-badge').style.display=isInvisible?'flex':'none';
+  toast(isInvisible?'👁️ وضع التخفي مفعّل':'👁️ وضع التخفي معطّل','info');
+  fbDB.ref('users/'+currentUser.uid+'/isInvisible').set(isInvisible);
+}
+function toggleTheme(btn){dayMode=!dayMode;document.body.classList.toggle('day-mode',dayMode);btn.textContent=dayMode?'🌙':'☀️';}
+
+function showRoomUsers() {
+  const room=rooms[currentRoom];
+  const roomUsers=(room?.users||[]).map(id=>({...users[id],id})).filter(Boolean);
+  document.getElementById('room-users-title').textContent='👥 أعضاء '+(room?.name||'')+' ('+roomUsers.length+')';
+  const body=document.getElementById('room-users-body'); body.innerHTML='';
+  if(!roomUsers.length){body.innerHTML='<div style="text-align:center;color:var(--text-muted);padding:20px;">لا يوجد أعضاء</div>';}
+  roomUsers.forEach(u=>{
+    const d=document.createElement('div'); d.className='user-item';
+    d.innerHTML=`<div class="user-avatar-sm" style="width:36px;height:36px;">${renderAvatarHTML(u,36)}</div><div class="user-info-sm"><div style="color:${RANKS[u.rank]?.color};">${u.name}</div><div>${makeBadgeHTML(u.rank)}</div></div>`;
+    body.appendChild(d);
+  });
+  showModal('room-users-modal');
+}
+
+// ═══════════════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════════════
+function initDashboard() {
+  const perms=RANK_PERMISSIONS[currentUser.rank]||{};
+  const tabs=[{id:'stats',label:'📊 الإحصائيات'},{id:'users_list',label:'👥 المستخدمون'}];
+  if(perms.canPromote) tabs.push({id:'promotions',label:'⭐ الترقيات'});
+  if(perms.canBan||perms.canMute) tabs.push({id:'penalties_tab',label:'⚖️ العقوبات'});
+  tabs.push({id:'reports_tab',label:'🚩 البلاغات'});
+  if(perms.canAddEmoji) tabs.push({id:'emoji_tab',label:'😀 إيموجي/شارات'});
+  if(perms.canManageBadges) tabs.push({id:'badges_tab',label:'🏅 الشارات'});
+  if(perms.canManageRooms) tabs.push({id:'rooms_tab',label:'💬 الغرف'});
+  if(perms.canViewLocation) tabs.push({id:'visits_tab',label:'🌍 الزيارات'});
+  if(perms.canViewDMs) tabs.push({id:'dm_log_tab',label:'📨 سجل الرسائل الخاصة'});
+  if(perms.canRestart) tabs.push({id:'system_tab',label:'⚙️ النظام'});
+  const tabsEl=document.getElementById('dash-tabs'); tabsEl.innerHTML='';
+  tabs.forEach((t,i)=>{
+    const d=document.createElement('div'); d.className='dash-tab'+(i===0?' active':''); d.textContent=t.label;
+    d.onclick=()=>{document.querySelectorAll('.dash-tab').forEach(x=>x.classList.remove('active'));d.classList.add('active');renderDashPanel(t.id);};
+    tabsEl.appendChild(d);
+  });
+  renderDashPanel('stats');
+}
+
+async function renderDashPanel(panel) {
+  const el=document.getElementById('dash-content'); el.innerHTML='';
+  const usersArr2=Object.entries(users).map(([id,u])=>({...u,id}));
+  const penArr=Object.entries(penalties);
+
+  if(panel==='stats') {
+    const [msgsSnap,postsSnap,repsSnap,visSnap,dmsSnap]=await Promise.all([
+      fbDB.ref('messages').get(), fbDB.ref('posts').get(),
+      fbDB.ref('reports').get(), fbDB.ref('visits').get(), fbDB.ref('dms').get()
+    ]);
+    const onlineSnap=await fbDB.ref('online').get(); const onlineCount=Object.keys(onlineSnap.val()||{}).length;
+    let msgCount=0; const msgsVal=msgsSnap.val()||{}; Object.values(msgsVal).forEach(r=>msgCount+=Object.keys(r||{}).length);
+    let dmCount=0; const dmsVal=dmsSnap.val()||{}; Object.values(dmsVal).forEach(c=>dmCount+=Object.keys(c||{}).length);
+    el.innerHTML=`<div class="stats-grid">
+      <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-number">${usersArr2.length}</div><div class="stat-label">إجمالي المستخدمين</div></div>
+      <div class="stat-card"><div class="stat-icon">🟢</div><div class="stat-number">${onlineCount}</div><div class="stat-label">متصلون الآن</div></div>
+      <div class="stat-card"><div class="stat-icon">🚫</div><div class="stat-number">${penArr.filter(([,p])=>p.type==='ban').length}</div><div class="stat-label">محظورون</div></div>
+      <div class="stat-card"><div class="stat-icon">🔇</div><div class="stat-number">${penArr.filter(([,p])=>p.type==='mute').length}</div><div class="stat-label">مكتومون</div></div>
+      <div class="stat-card"><div class="stat-icon">💬</div><div class="stat-number">${msgCount}</div><div class="stat-label">إجمالي الرسائل</div></div>
+      <div class="stat-card"><div class="stat-icon">🚩</div><div class="stat-number">${Object.keys(repsSnap.val()||{}).length}</div><div class="stat-label">البلاغات</div></div>
+      <div class="stat-card"><div class="stat-icon">📢</div><div class="stat-number">${Object.keys(postsSnap.val()||{}).length}</div><div class="stat-label">البوستات</div></div>
+      <div class="stat-card"><div class="stat-icon">🌍</div><div class="stat-number">${Object.keys(visSnap.val()||{}).length}</div><div class="stat-label">إجمالي الزيارات</div></div>
+      <div class="stat-card"><div class="stat-icon">📨</div><div class="stat-number">${dmCount}</div><div class="stat-label">الرسائل الخاصة</div></div>
+    </div>`;
+  }
+  else if(panel==='users_list') {
+    const rankOrder=Object.keys(RANKS);
+    let html=`<table class="data-table"><thead><tr><th>المستخدم</th><th>الرتبة</th><th>البلد</th><th>الحالة</th></tr></thead><tbody>`;
+    [...usersArr2].sort((a,b)=>rankOrder.indexOf(a.rank)-rankOrder.indexOf(b.rank)).forEach(u=>{
+      const pen=penalties[u.id];
+      html+=`<tr><td>${u.avatar} ${u.name}</td><td>${makeBadgeHTML(u.rank)}</td><td style="font-family:'Share Tech Mono',monospace;font-size:12px;">${u.country||'-'}</td><td>${pen?`<span class="tag tag-${pen.type==='ban'?'banned':'muted'}">${pen.type==='ban'?'محظور':'مكتوم'}</span>`:'<span class="tag tag-ok">نشط</span>'}</td></tr>`;
+    }); html+='</tbody></table>'; el.innerHTML=html;
+  }
+  else if(panel==='promotions') {
+    let html=`<table class="data-table"><thead><tr><th>المستخدم</th><th>الرتبة الحالية</th><th>تغيير الرتبة</th></tr></thead><tbody>`;
+    usersArr2.forEach(u=>{
+      if(u.rank==='owner') return;
+      html+=`<tr><td>${u.avatar} ${u.name}</td><td>${makeBadgeHTML(u.rank)}</td><td>
+        <select class="form-select" style="width:auto;padding:4px 8px;font-size:12px;" id="rank-sel-${u.id}">
+          ${Object.entries(RANKS).filter(([k])=>k!=='owner').map(([k,v])=>`<option value="${k}"${u.rank===k?' selected':''}>${v.icon} ${v.label}</option>`).join('')}
+        </select>
+        <button class="btn btn-primary btn-sm" style="margin-right:6px;" onclick="changeRank('${u.id}')">تطبيق</button>
+      </td></tr>`;
+    }); html+='</tbody></table>'; el.innerHTML=html;
+  }
+  else if(panel==='penalties_tab') {
+    const perms=RANK_PERMISSIONS[currentUser.rank];
+    let html=`<div style="margin-bottom:16px;"><h3 style="font-family:'Orbitron',sans-serif;font-size:13px;color:var(--cyan);margin-bottom:12px;">تطبيق عقوبة</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+        <div class="form-group" style="margin:0;flex:1;min-width:150px;"><label class="form-label">المستخدم</label>
+          <select class="form-select" id="pen-user-sel">${usersArr2.filter(u=>u.rank!=='owner').map(u=>`<option value="${u.id}">${u.name}</option>`).join('')}</select></div>
+        <div class="form-group" style="margin:0;"><label class="form-label">النوع</label>
+          <select class="form-select" id="pen-type-sel">${perms.canBan?'<option value="ban">حظر</option>':''}${perms.canMute?'<option value="mute">كتم</option>':''}</select></div>
+        <div class="form-group" style="margin:0;flex:1;min-width:120px;"><label class="form-label">المدة</label>
+          <select class="form-select" id="pen-dur-sel"><option value="1h">ساعة</option><option value="6h">6 ساعات</option><option value="24h">يوم</option><option value="7d">7 أيام</option><option value="30d">30 يوم</option><option value="permanent">دائم</option></select></div>
+        <div class="form-group" style="margin:0;flex:2;min-width:150px;"><label class="form-label">السبب</label><input class="form-input" id="pen-reason" placeholder="سبب العقوبة..."></div>
+        <button class="btn btn-danger" onclick="applyPenalty()">تطبيق ⚖️</button>
+      </div></div>
+    <h3 style="font-family:'Orbitron',sans-serif;font-size:13px;color:var(--cyan);margin-bottom:12px;">العقوبات الحالية</h3>
+    <table class="data-table"><thead><tr><th>المستخدم</th><th>النوع</th><th>السبب</th><th>حتى</th><th>رفع</th></tr></thead><tbody>`;
+    penArr.forEach(([uid,pen])=>{
+      const u=users[uid]; if(!u) return;
+      html+=`<tr><td>${u.avatar} ${u.name}</td><td><span class="tag tag-${pen.type==='ban'?'banned':'muted'}">${pen.type==='ban'?'حظر':'كتم'}</span></td><td style="font-size:12px;">${pen.reason||'-'}</td><td style="font-family:'Share Tech Mono',monospace;font-size:11px;">${pen.until==='permanent'?'دائم':pen.until}</td><td><button class="btn btn-ghost btn-sm" onclick="liftPenalty('${uid}')">رفع</button></td></tr>`;
+    }); html+='</tbody></table>'; el.innerHTML=html;
+  }
+  else if(panel==='reports_tab') {
+    const snap=await fbDB.ref('reports').get(); const reps=snap.val()||{};
+    let html=`<table class="data-table"><thead><tr><th>المُبلِّغ</th><th>المُبلَّغ عنه</th><th>السبب</th><th>التفاصيل</th><th>الوقت</th><th>الحالة</th></tr></thead><tbody>`;
+    const repsArr=Object.values(reps);
+    if(!repsArr.length) html+='<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">لا توجد بلاغات</td></tr>';
+    repsArr.forEach(r=>{
+      const rep=users[r.reporter];
+      html+=`<tr><td>${rep?.name||'مجهول'}</td><td>${r.reported}</td><td>${r.reason}</td><td style="font-size:12px;max-width:150px;">${r.details}</td><td style="font-size:11px;font-family:'Share Tech Mono',monospace;">${r.time}</td><td><span class="tag" style="border-color:var(--cyan);color:var(--cyan);">${r.status}</span></td></tr>`;
+    }); html+='</tbody></table>'; el.innerHTML=html;
+  }
+  else if(panel==='emoji_tab') {
+    let html=`<h3 style="font-family:'Orbitron',sans-serif;font-size:13px;color:var(--cyan);margin-bottom:12px;">إضافة إيموجي / صورة / GIF</h3>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:20px;background:var(--bg-card);padding:14px;border-radius:8px;border:1px solid var(--border);">
+      <div class="form-group" style="margin:0;"><label class="form-label">النوع</label>
+        <select class="form-select" id="new-emoji-type" style="width:120px;" onchange="toggleEmojiInputType()">
+          <option value="emoji">إيموجي نص</option><option value="image">صورة/GIF رابط</option><option value="upload">رفع ملف</option>
+        </select></div>
+      <div class="form-group" style="margin:0;flex:1;min-width:150px;" id="emoji-text-group"><label class="form-label">الإيموجي</label><input class="form-input" id="new-emoji-val" placeholder="🔥"></div>
+      <div class="form-group" style="margin:0;flex:1;min-width:150px;display:none;" id="emoji-url-group"><label class="form-label">رابط الصورة</label><input class="form-input" id="new-emoji-url" placeholder="https://..."></div>
+      <div class="form-group" style="margin:0;flex:1;min-width:150px;display:none;" id="emoji-file-group"><label class="form-label">رفع ملف</label><input type="file" accept="image/*,.gif" class="form-input" id="new-emoji-file" style="padding:6px;"></div>
+      <div class="form-group" style="margin:0;"><label class="form-label">اسم</label><input class="form-input" id="new-emoji-name" placeholder="اسم الإيموجي" style="width:130px;"></div>
+      <button class="btn btn-primary" onclick="addCustomEmoji()">إضافة +</button>
+    </div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text-muted);margin-bottom:10px;">الإيموجي الحالية</div>
+    <div class="emoji-grid">`;
+    Object.entries(customEmojis).forEach(([id,em])=>{
+      const preview=(em.type==='image'||em.type==='gif')?`<img src="${em.val}" style="width:28px;height:28px;object-fit:contain;border-radius:4px;">`:`<span style="font-size:22px;">${em.val||em}</span>`;
+      html+=`<div style="display:inline-flex;align-items:center;gap:6px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:6px 10px;">${preview}<span style="font-size:11px;color:var(--text-muted);">${em.name||''}</span><button class="btn btn-danger btn-sm" style="padding:2px 6px;" onclick="removeEmoji('${id}')">✕</button></div>`;
+    }); html+='</div>'; el.innerHTML=html;
+  }
+  else if(panel==='badges_tab') {
+    let html=`<h3 style="font-family:'Orbitron',sans-serif;font-size:13px;color:var(--cyan);margin-bottom:12px;">إدارة شارات الرتب</h3>
+      <table class="data-table"><thead><tr><th>الرتبة</th><th>الشارة</th><th>أيقونة جديدة</th></tr></thead><tbody>`;
+    Object.entries(RANKS).forEach(([key,rank])=>{
+      html+=`<tr><td>${rank.label}</td><td>${makeBadgeHTML(key)}</td><td style="display:flex;gap:8px;align-items:center;"><input class="form-input" style="width:140px;padding:4px 8px;" id="rank-icon-${key}" value="${rank.iconType==='image'?rank.iconData||'':rank.icon}" placeholder="إيموجي أو رابط صورة"><button class="btn btn-primary btn-sm" onclick="updateRankIcon('${key}')">حفظ</button></td></tr>`;
+    }); html+='</tbody></table>'; el.innerHTML=html;
+  }
+  else if(panel==='rooms_tab') {
+    const roomsArr2=Object.entries(rooms).map(([id,r])=>({...r,id}));
+    let html=`<div style="margin-bottom:16px;"><h3 style="font-family:'Orbitron',sans-serif;font-size:13px;color:var(--cyan);margin-bottom:12px;">إضافة غرفة</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <input class="form-input" id="new-room-name" placeholder="اسم الغرفة" style="flex:1;min-width:120px;">
+        <input class="form-input" id="new-room-icon" placeholder="⚡" style="width:60px;">
+        <input class="form-input" id="new-room-desc" placeholder="وصف الغرفة" style="flex:2;min-width:150px;">
+        <button class="btn btn-primary" onclick="addRoom()">إضافة +</button>
+      </div></div>
+    <table class="data-table"><thead><tr><th>الغرفة</th><th>الحالة</th><th>الأعضاء</th><th>التحكم</th></tr></thead><tbody>`;
+    roomsArr2.forEach(r=>{
+      html+=`<tr><td>${r.icon} ${r.name}</td><td><span class="tag ${r.open?'tag-ok':'tag-banned'}">${r.open?'مفتوحة':'مغلقة'}</span></td><td>${(r.users||[]).length}</td><td class="action-btns">
+        <button class="btn btn-ghost btn-sm" onclick="toggleRoom('${r.id}')">${r.open?'إغلاق':'فتح'}</button>
+        ${r.id!=='main'?`<button class="btn btn-danger btn-sm" onclick="deleteRoom('${r.id}')">حذف</button>`:''}
+      </td></tr>`;
+    }); html+='</tbody></table>'; el.innerHTML=html;
+  }
+  else if(panel==='visits_tab') {
+    const snap=await fbDB.ref('visits').limitToLast(50).get();
+    const visArr=Object.values(snap.val()||{}).reverse();
+    let html=`<table class="data-table"><thead><tr><th>البلد</th><th>الجهاز</th><th>الوقت</th><th>المستخدم</th></tr></thead><tbody>`;
+    if(!visArr.length) html+='<tr><td colspan="4" style="text-align:center;color:var(--text-muted);">لا توجد زيارات</td></tr>';
+    visArr.forEach(v=>{const u=users[v.userId];html+=`<tr><td>${v.country}</td><td>${v.device}</td><td style="font-size:11px;font-family:'Share Tech Mono',monospace;">${v.time}</td><td>${u?u.name:'زائر'}</td></tr>`;});
+    html+='</tbody></table>'; el.innerHTML=html;
+  }
+  else if(panel==='dm_log_tab') {
+    const snap=await fbDB.ref('dms').get(); const allDMs=snap.val()||{};
+    let html=`<h3 style="font-family:'Orbitron',sans-serif;font-size:13px;color:var(--cyan);margin-bottom:12px;">سجل الرسائل الخاصة</h3>`;
+    const convs=Object.entries(allDMs);
+    if(!convs.length) { html+='<div style="text-align:center;color:var(--text-muted);padding:20px;font-family:\'Share Tech Mono\',monospace;">لا توجد رسائل خاصة</div>'; }
+    else {
+      html+=`<table class="data-table"><thead><tr><th>المحادثة</th><th>آخر رسالة</th><th>العدد</th></tr></thead><tbody>`;
+      convs.forEach(([key,conv])=>{
+        const msgs=Object.values(conv||{}); if(!msgs.length) return;
+        const last=msgs[msgs.length-1];
+        const ids=key.split('_'); const u1=users[ids[0]], u2=users[ids[1]];
+        html+=`<tr><td>${u1?.name||'مجهول'} ↔ ${u2?.name||'مجهول'}</td><td style="font-size:12px;">${last.media?'📎 وسائط':last.text||''}</td><td style="font-family:'Share Tech Mono',monospace;">${msgs.length}</td></tr>`;
+      }); html+='</tbody></table>';
+    }
+    el.innerHTML=html;
+  }
+  else if(panel==='system_tab') {
+    el.innerHTML=`<div style="display:flex;flex-direction:column;gap:16px;max-width:500px;">
+      <div class="stat-card" style="text-align:right;">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--text-muted);margin-bottom:12px;">// إجراءات النظام</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <button class="btn btn-danger" onclick="restartSite()">🔄 إعادة تشغيل الموقع</button>
+          <button class="btn btn-ghost" onclick="clearAllMessages()">🗑️ مسح جميع الرسائل</button>
+          <button class="btn btn-ghost" onclick="exportData()">📥 تصدير البيانات</button>
+        </div>
+      </div>
+      <div class="stat-card" style="text-align:right;">
+        <div style="font-family:'Orbitron',monospace;font-size:12px;color:var(--cyan);margin-bottom:8px;">معلومات النظام</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--text-muted);">
+          <div>𝑬𝑺𝑪𝑨𝑵𝑶𝑹 OS v2.0 — Firebase Edition</div>
+          <div>صاحب الموقع: ${OWNER_NAME}</div>
+          <div>المستخدمون: ${Object.keys(users).length}</div>
+        </div>
+      </div>
+    </div>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// DASH ACTIONS
+// ═══════════════════════════════════════════════════════════
+async function changeRank(userId) {
+  const sel=document.getElementById('rank-sel-'+userId); if(!sel) return;
+  if(SERVER_URL) {
+    const res=await serverCall('POST','/api/admin/set-rank',{targetUid:userId,rank:sel.value});
+    if(res.error){toast(res.error,'error');return;}
+  } else {
+    await fbDB.ref('users/'+userId+'/rank').set(sel.value);
+  }
+  const u=users[userId]; if(u){u.rank=sel.value;}
+  toast('تم تغيير الرتبة','success'); renderDashPanel('promotions');
+}
+
+async function applyPenalty() {
+  const userId=document.getElementById('pen-user-sel')?.value;
+  const type=document.getElementById('pen-type-sel')?.value;
+  const dur=document.getElementById('pen-dur-sel')?.value;
+  const reason=document.getElementById('pen-reason')?.value;
+  if(!userId||!type){toast('يرجى تحديد المستخدم والنوع','error');return;}
+  let until;
+  if(dur==='permanent'){until='permanent';}
+  else{const ms={'1h':3600000,'6h':21600000,'24h':86400000,'7d':604800000,'30d':2592000000};until=new Date(Date.now()+(ms[dur]||3600000)).toISOString();}
+  if(SERVER_URL) {
+    const res=await serverCall('POST','/api/admin/penalty',{targetUid:userId,type,duration:dur,reason});
+    if(res.error){toast(res.error,'error');return;}
+  } else {
+    await fbDB.ref('penalties/'+userId).set({type,reason:reason||'',until,appliedAt:new Date().toISOString()});
+  }
+  const u=users[userId]; toast('تم تطبيق '+(type==='ban'?'الحظر':'الكتم')+' على '+(u?.name||'المستخدم'),'success');
+  renderDashPanel('penalties_tab');
+}
+
+async function liftPenalty(userId) {
+  if(SERVER_URL) {
+    const res=await serverCall('DELETE','/api/admin/penalty/'+userId);
+    if(res.error){toast(res.error,'error');return;}
+  } else {
+    await fbDB.ref('penalties/'+userId).remove();
+  }
+  const u=users[userId]; toast('تم رفع العقوبة عن '+(u?.name||'المستخدم'),'success');
+  renderDashPanel('penalties_tab');
+}
+
+function toggleEmojiInputType() {
+  const type=document.getElementById('new-emoji-type')?.value;
+  document.getElementById('emoji-text-group').style.display=type==='emoji'?'':'none';
+  document.getElementById('emoji-url-group').style.display=type==='image'?'':'none';
+  document.getElementById('emoji-file-group').style.display=type==='upload'?'':'none';
+}
+async function addCustomEmoji() {
+  const type=document.getElementById('new-emoji-type')?.value;
+  const name=document.getElementById('new-emoji-name')?.value.trim()||'';
+  let val, emojiType;
+  if(type==='emoji'){val=document.getElementById('new-emoji-val')?.value.trim();if(!val){toast('أدخل إيموجي','error');return;}emojiType='emoji';}
+  else if(type==='image'){val=document.getElementById('new-emoji-url')?.value.trim();if(!val){toast('أدخل رابط الصورة','error');return;}emojiType=val.toLowerCase().includes('.gif')?'gif':'image';}
+  else if(type==='upload'){const f=document.getElementById('new-emoji-file')?.files[0];if(!f){toast('اختر ملفاً','error');return;}val=await new Promise(r=>{const rd=new FileReader();rd.onload=e=>r(e.target.result);rd.readAsDataURL(f);});emojiType=f.type==='image/gif'?'gif':'image';}
+  await fbDB.ref('emojis').push({type:emojiType,val,name});
+  toast('تم إضافة الإيموجي','success'); renderDashPanel('emoji_tab');
+}
+async function removeEmoji(id) {
+  await fbDB.ref('emojis/'+id).remove(); renderDashPanel('emoji_tab');
+}
+function updateRankIcon(rankKey) {
+  const inp=document.getElementById('rank-icon-'+rankKey); if(!inp) return;
+  const val=inp.value.trim();
+  if(val.startsWith('http')||val.startsWith('data:')){RANKS[rankKey].iconType='image';RANKS[rankKey].iconData=val;}
+  else{RANKS[rankKey].iconType='emoji';RANKS[rankKey].icon=val;delete RANKS[rankKey].iconData;}
+  toast('تم تحديث شارة '+RANKS[rankKey].label,'success');
+}
+async function addRoom() {
+  const name=document.getElementById('new-room-name')?.value.trim();
+  const icon=document.getElementById('new-room-icon')?.value.trim()||'💬';
+  const desc=document.getElementById('new-room-desc')?.value.trim()||'';
+  if(!name){toast('اسم الغرفة مطلوب','error');return;}
+  const id='r_'+Date.now();
+  await fbDB.ref('rooms/'+id).set({name,icon,open:true,desc,createdAt:new Date().toISOString()});
+  renderDashPanel('rooms_tab'); toast('تم إضافة الغرفة','success');
+}
+async function toggleRoom(id) {
+  const room=rooms[id]; if(!room) return;
+  await fbDB.ref('rooms/'+id+'/open').set(!room.open);
+  renderDashPanel('rooms_tab');
+}
+async function deleteRoom(id) {
+  if(id==='main'){toast('لا يمكن حذف الغرفة الرئيسية','error');return;}
+  await fbDB.ref('rooms/'+id).remove();
+  await fbDB.ref('messages/'+id).remove();
+  if(currentRoom===id) joinRoom('main');
+  renderDashPanel('rooms_tab'); toast('تم حذف الغرفة','success');
+}
+function restartSite(){toast('🔄 جارٍ إعادة تشغيل...','info');setTimeout(()=>window.location.reload(),1500);}
+async function clearAllMessages() {
+  if(!confirm('مسح جميع الرسائل؟')) return;
+  if(SERVER_URL){const res=await serverCall('DELETE','/api/admin/messages');if(res.error){toast(res.error,'error');return;}}
+  else await fbDB.ref('messages').remove();
+  messages={}; renderMessages(); toast('تم مسح الرسائل','success');
+}
+async function exportData() {
+  let data;
+  if(SERVER_URL){data=await serverCall('GET','/api/admin/export');}
+  else{
+    const [u,r,rp,p,pe,v]=await Promise.all([fbDB.ref('users').get(),fbDB.ref('rooms').get(),fbDB.ref('reports').get(),fbDB.ref('posts').get(),fbDB.ref('penalties').get(),fbDB.ref('visits').get()]);
+    data={users:u.val(),rooms:r.val(),reports:rp.val(),posts:p.val(),penalties:pe.val(),visits:v.val()};
+  }
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='escanor_firebase_backup.json';a.click();
+  toast('تم تصدير البيانات 📥','success');
+}
+
+// ═══════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════
+function toast(msg,type='info'){
+  const icons={success:'✅',error:'❌',info:'ℹ️'};
+  const t=document.createElement('div'); t.className=`toast ${type}`;
+  t.innerHTML=`<span class="toast-icon">${icons[type]}</span><span>${msg}</span>`;
+  document.getElementById('toast-container').appendChild(t);
+  setTimeout(()=>t.remove(),3500);
+}
+
+// ═══════════════════════════════════════════════════════════
+// ANTI-SPAM
+// ═══════════════════════════════════════════════════════════
+const msgTimestamps=[];
+function isSpam(){
+  const now=Date.now(); msgTimestamps.push(now);
+  const recent=msgTimestamps.filter(t=>now-t<5000);
+  msgTimestamps.splice(0,msgTimestamps.length,...recent);
+  return recent.length>5;
+}
+
+// ═══════════════════════════════════════════════════════════
+// START
+// ═══════════════════════════════════════════════════════════
+initMatrix();
+runBoot();
+updateClock();
+</script>
+</body>
+</html>
