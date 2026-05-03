@@ -2513,4 +2513,28 @@ runBoot();
 updateClock();
 </script>
 </body>
+  <script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyCts7srrieOCyWb0MBIHfJbZ6Sh5FrUrxQ",
+    authDomain: "escanor-chat-8178c.firebaseapp.com",
+    databaseURL: "https://escanor-chat-8178c-default-rtdb.firebaseio.com",
+    projectId: "escanor-chat-8178c",
+    storageBucket: "escanor-chat-8178c.firebasestorage.app",
+    messagingSenderId: "657166584629",
+    appId: "1:657166584629:web:d9bddbee44355b92a0da7c",
+    measurementId: "G-80S6H5KJY4"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+  </script>
 </html>
